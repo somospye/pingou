@@ -1,8 +1,12 @@
 import { Command, type CommandContext, Declare, Embed } from "seyfert";
+import { CONFIG } from "../config/config";
 
 @Declare({
 	name: "ping",
 	description: "Mira la latencia del bot",
+	props: {
+		requiredRoles: [CONFIG.ROLES.ADMIN]
+	}
 })
 export default class PingCommand extends Command {
 	override async run(ctx: CommandContext) {
