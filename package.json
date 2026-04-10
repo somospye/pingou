@@ -10,6 +10,18 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
+  "scripts": {
+    "start:prod": "bun run dist/index.js",
+    "start:dev": "bun --watch src/index.ts",
+    "build": "bun build ./src/index.ts ./src/**/*.ts --outdir ./dist --target bun",
+    "format:check": "biome check .",
+    "format:fix": "biome format --write .",
+    "lint": "biome lint --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
+  },
 	"dependencies": {
 		"@types/pg": "^8.20.0",
 		"drizzle-orm": "^0.45.2",
