@@ -1,6 +1,6 @@
 import { createEvent } from "seyfert";
 import { aiService } from "../services/ai";
-import { CooldownService } from "../services/Cooldown";
+import { cooldownService } from "../services/cooldown";
 import { Embeds } from "../utils/embeds";
 
 export default createEvent({
@@ -12,7 +12,7 @@ export default createEvent({
 			const userId = message.author.id;
 			const cooldownKey = "ai-mention";
 
-			const currentCooldown = await CooldownService.getCooldown(
+			const currentCooldown = await cooldownService.getCooldown(
 				userId,
 				cooldownKey,
 			);
@@ -53,7 +53,7 @@ export default createEvent({
 
 			const { text, usage } = await aiService.chat(promptMessages);
 
-			await CooldownService.setCooldown(userId, cooldownKey, 15);
+			await cooldownService.setCooldown(userId, cooldownKey, 15);
 
 			await message.reply({
 				embeds: [Embeds.aiReplyEmbed(text, usage)],

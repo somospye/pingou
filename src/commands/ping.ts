@@ -1,5 +1,6 @@
-import { Command, type CommandContext, Declare, Embed } from "seyfert";
+import { Command, type CommandContext, Declare } from "seyfert";
 import { CONFIG } from "../config/config";
+import { Embeds } from "../utils/embeds";
 
 @Declare({
 	name: "ping",
@@ -11,13 +12,6 @@ import { CONFIG } from "../config/config";
 export default class PingCommand extends Command {
 	override async run(ctx: CommandContext) {
 		const latency = ctx.client.gateway.latency;
-
-		const embed = new Embed()
-			.setTitle(`**LATENCIA DEL BOT**`)
-			.setDescription(`La latencia del bot es de ${latency}ms`)
-			.setColor("Blue")
-			.setTimestamp();
-
-		await ctx.write({ embeds: [embed] });
+		await ctx.write({ embeds: [Embeds.pingEmbed(latency)] });
 	}
 }

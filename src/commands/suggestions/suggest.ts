@@ -3,6 +3,7 @@ import {
 	type CommandContext,
 	createStringOption,
 	Declare,
+	Middlewares,
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
@@ -18,10 +19,15 @@ const options = {
 };
 
 @Declare({
-	name: "suggest",
+	name: "sugerir",
 	description: "Haz una sugerencia al servidor",
+	props: {
+		cooldown: 3600,
+		cooldownKey: "suggest",
+	},
 })
 @Options(options)
+@Middlewares(["cooldown"])
 export default class SuggestCommand extends Command {
 	override async run(ctx: CommandContext<typeof options>) {
 		const { sugerencia } = ctx.options;

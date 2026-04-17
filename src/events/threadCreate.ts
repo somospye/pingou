@@ -1,6 +1,7 @@
-import { ActionRow, Button, createEvent, Embed } from "seyfert";
+import { ActionRow, Button, createEvent } from "seyfert";
 import { CONFIG } from "../config/config";
 import { aiService } from "../services/ai";
+import { Embeds } from "../utils/embeds";
 
 const processedThreads = new Set<string>();
 
@@ -28,12 +29,10 @@ export default createEvent({
 			embedDescription = `Hola <@${thread.ownerId}>, te pido por favor que especifiques mejor tu pregunta sobre **${thread.name}** para poder ayudarte mejor.`;
 		}
 
-		const embed = new Embed()
-			.setTitle("¡Hola! Soy Pingou, el asistente virtual de PyE")
-			.setThumbnail(client.me.avatarURL())
-			.setDescription(embedDescription)
-			.setColor("Blue")
-			.setTimestamp();
+		const embed = Embeds.threadWelcomeEmbed({
+			description: embedDescription,
+			botIcon: client.me.avatarURL(),
+		});
 
 		const button = new Button()
 			.setCustomId("foro-respuesta-ia")
