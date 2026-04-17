@@ -24,17 +24,14 @@ export const Embeds = {
 
 	suggestionEmbed(ctx: CommandContext, suggestion: string): Embed {
 		return new Embed()
-			.setTitle(`**NUEVA SUGERENCIA**`)
-			.setThumbnail(ctx.author.avatarURL())
-			.setDescription(
-				`<@${ctx.author.id}> ha enviado una nueva sugerencia.` +
-					`\n\n` +
-					`**Sugerencia:**` +
-					`\n\n` +
-					`${suggestion}`,
-			)
+			.setTitle(`**Nueva sugerencia!**`)
+			.setDescription(`${suggestion}`)
+			.setColor("Blurple")
+			.setFooter({
+				text: `Puedes votar a favor o en contra de esta sugerencia  •  ${new Date().toLocaleString()}`,
+			})
 			.setAuthor({
-				name: "Sugerencia registrada con exito",
+				name: `${ctx.author.username}`,
 				iconUrl: ctx.author.avatarURL(),
 			});
 	},
