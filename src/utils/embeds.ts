@@ -371,6 +371,109 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	memberJoinEmbed(data: {
+		userId: string;
+		username: string;
+		avatarUrl: string;
+		inviteCode: string | null;
+		inviterId: string | null;
+		inviteUses: number | null;
+		inviteMaxUses: number | null;
+		inviteMaxAge: number | null;
+		inviteCreatedAt: string | null;
+		inviterStats: { totalInvites: number; currentMembers: number } | null;
+	}): Embed {
+		const inviteText =
+			data.inviterId && data.inviteCode
+				? `<@${data.inviterId}> (\`${data.inviteCode}\`)`
+				: data.inviteCode
+					? `\`${data.inviteCode}\``
+					: "Desconocida";
+
+		const usosText =
+			data.inviteUses !== null
+				? `${data.inviteUses} / ${data.inviteMaxUses === 0 ? "∞" : data.inviteMaxUses}`
+				: "—";
+
+		let duracionText = "—";
+		if (data.inviteMaxAge !== null) {
+			if (data.inviteMaxAge === 0) {
+				duracionText = "Permanente";
+			} else if (data.inviteCreatedAt) {
+				const expiresAt =
+					new Date(data.inviteCreatedAt).getTime() + data.inviteMaxAge * 1000;
+				duracionText = `<t:${Math.floor(expiresAt / 1000)}:R>`;
+			}
+		}
+
+		const fields = [
+			{ name: "Invitado por", value: inviteText, inline: true },
+			{ name: "Usos", value: usosText, inline: true },
+			{ name: "Invite vence", value: duracionText, inline: true },
+		];
+
+		if (data.inviterStats !== null) {
+			fields.push({
+				name: "Personas invitadas",
+				value: `**${data.inviterStats.totalInvites}** en total • **${data.inviterStats.currentMembers}** en el servidor`,
+				inline: false,
+			});
+		}
+
+		return new Embed()
+			.setAuthor({ name: data.username, iconUrl: data.avatarUrl })
+			.setDescription(`<@${data.userId}> se unió al servidor.`)
+			.setColor("Blue")
+			.addFields(fields)
+			.setTimestamp();
+	},
+
+	invitesEmbed(data: {
+		user: { id: string; username: string };
+		dbInvites: Array<{ code: string; uses: number }>;
+		joins: Array<{ inviteCode: string; userId: string }>;
+	}): Embed {
+		const joinsByCode = new Map<string, string[]>();
+		for (const join of data.joins) {
+			const arr = joinsByCode.get(join.inviteCode) ?? [];
+			arr.push(join.userId);
+			joinsByCode.set(join.inviteCode, arr);
+		}
+
+		const lines: string[] = [];
+
+		for (const invite of data.dbInvites.slice(0, 12)) {
+			const joiners = joinsByCode.get(invite.code) ?? [];
+			const joinText =
+				joiners.length > 0
+					? joiners
+							.slice(0, 5)
+							.map((id) => `<@${id}>`)
+							.join(", ") +
+						(joiners.length > 5 ? ` y ${joiners.length - 5} más` : "")
+					: "nadie aún";
+			lines.push(
+				`**\`${invite.code}\`** — ${invite.uses} uso(s)\n↳ ${joinText}`,
+			);
+		}
+
+		const totalJoins = data.joins.length;
+		const totalInvites = data.dbInvites.length;
+
+		return new Embed()
+			.setTitle(`Invites de @${data.user.username}`)
+			.setDescription(
+				lines.length > 0
+					? lines.join("\n\n")
+					: "Este usuario no tiene invitaciones registradas.",
+			)
+			.setColor("Blue")
+			.setFooter({
+				text: `${totalInvites} invite(s) • ${totalJoins} join(s) registrado(s)`,
+			})
+			.setTimestamp();
+	},
+
 	modTopEmbed(data: {
 		period: string;
 		moderators: Array<{
