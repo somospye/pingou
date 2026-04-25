@@ -350,6 +350,27 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	voiceUnrestrictDMEmbed(guildName: string): Embed {
+		return new Embed()
+			.setTitle("¡Ya puedes acceder a los canales de voz!")
+			.setColor("Green")
+			.setDescription(
+				`Han pasado las 6 horas de espera en **${guildName}**. Tu restricción de voz fue levantada, ¡a disfrutar!`,
+			)
+			.setTimestamp();
+	},
+
+	voiceRestrictDMEmbed(guildName: string): Embed {
+		return new Embed()
+			.setTitle(`¡Bienvenido/a a ${guildName}!`)
+			.setColor("Blue")
+			.setDescription(
+				`Nos alegra tenerte aquí. Te avisamos que por política del servidor, **no podrás acceder a los canales de voz durante las primeras 6 horas** desde que te uniste.\n\nUna vez transcurrido ese tiempo, el acceso se habilitará automáticamente.`,
+			)
+			.setFooter({ text: "Si tienes alguna duda, contacta al staff." })
+			.setTimestamp();
+	},
+
 	modTopEmbed(data: {
 		period: string;
 		moderators: Array<{
