@@ -56,7 +56,9 @@ export default class AddRepCommand extends Command {
 				ctx.client,
 				guildId,
 				usuario.id,
+				ctx.author.id,
 				cantidad,
+				"manual",
 			);
 
 		if (CONFIG.CHANNELS.REP_LOG) {

@@ -1,6 +1,7 @@
 import { createEvent } from "seyfert";
 import { CONFIG } from "../config/config";
 import { inviteRepository } from "../repositories/inviteRepository";
+import { usersRepository } from "../repositories/usersRepository";
 import { inviteService } from "../services/inviteService";
 import { voiceRestrictService } from "../services/voiceRestrictService";
 import { Embeds } from "../utils/embeds";
@@ -10,6 +11,7 @@ const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 export default createEvent({
 	data: { once: false, name: "guildMemberAdd" },
 	async run(member, client) {
+		await usersRepository.findOrCreate(member.id);
 		await handleVoiceRestrict(member, client);
 		await handleInviteLog(member, client);
 	},

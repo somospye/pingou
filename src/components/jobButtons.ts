@@ -1,6 +1,6 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
 import { CONFIG } from "../config/config";
-import { reputationRepository } from "../repositories/reputationRepository";
+import { jobReputationRepository } from "../repositories/jobReputationRepository";
 import { jobService } from "../services/jobService";
 import { Embeds } from "../utils/embeds";
 import { fetchDisplayUser } from "../utils/moderation";
@@ -61,7 +61,7 @@ export default class JobButtons extends ComponentCommand {
 			embeds: [jobEmbed],
 		});
 
-		const newPoints = await reputationRepository.addReputation(userId);
+		const newPoints = await jobReputationRepository.addReputation(userId);
 		const promoted = await jobService.checkAndAssignPriorityRole(
 			ctx.client,
 			ctx.guildId || "",

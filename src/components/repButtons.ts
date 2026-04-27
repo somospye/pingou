@@ -73,6 +73,7 @@ export default class RepButtons extends ComponentCommand {
 				ctx.client,
 				ctx.guildId ?? "",
 				pending.receiverId,
+				ctx.author.id,
 			);
 
 		let receiverName = pending.receiverId;

@@ -1,7 +1,7 @@
 import type { UsingClient } from "seyfert";
 import { CONFIG } from "../config/config";
+import { jobReputationRepository } from "../repositories/jobReputationRepository";
 import { jobRepository } from "../repositories/jobRepository";
-import { reputationRepository } from "../repositories/reputationRepository";
 
 export class JobService {
 	async createPendingJob(data: {
@@ -29,7 +29,7 @@ export class JobService {
 		guildId: string,
 		userId: string,
 	) {
-		const points = await reputationRepository.getReputation(userId);
+		const points = await jobReputationRepository.getReputation(userId);
 		if (points >= CONFIG.REPUTATION_FOR_PRIORITY) {
 			try {
 				const member = await client.members.fetch(guildId, userId);
