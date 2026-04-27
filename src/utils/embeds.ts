@@ -474,6 +474,113 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	repNotificationEmbed(data: {
+		giverId: string;
+		giverName: string;
+		receivers: Array<{ id: string; name: string }>;
+		messageUrl: string;
+		channelId: string;
+		thanksContent: string;
+		referencedContent: string | null;
+	}): Embed {
+		const truncate = (s: string, n: number) =>
+			s.length > n ? `${s.slice(0, n)}...` : s;
+
+		const firstReceiver = data.receivers[0];
+		const mensajeLines =
+			data.referencedContent && firstReceiver
+				? `**@${firstReceiver.name}:** ${truncate(data.referencedContent, 200)}\n**@${data.giverName} respondió:** ${truncate(data.thanksContent, 200)}`
+				: `**@${data.giverName}:** ${truncate(data.thanksContent, 300)}`;
+
+		const ayudantesValue = data.receivers
+			.map((r, i) => `${i + 1}. (${r.id}) - <@${r.id}>`)
+			.join("\n");
+
+		return new Embed()
+			.setTitle("Se ha encontrado una nueva ayuda!")
+			.setColor("Blue")
+			.addFields([
+				{ name: "CANAL", value: `<#${data.channelId}>`, inline: true },
+				{
+					name: "MIEMBRO AYUDADO",
+					value: `<@${data.giverId}> (${data.giverId})`,
+					inline: true,
+				},
+				{
+					name: "MENSAJE DE AGRADECIMIENTO",
+					value: `[Ver mensaje](${data.messageUrl})\n${mensajeLines}`,
+					inline: false,
+				},
+				{
+					name: "POSIBLES AYUDANTES",
+					value: ayudantesValue,
+					inline: false,
+				},
+			])
+			.setTimestamp();
+	},
+
+	repStatsEmbed(data: {
+		userId: string;
+		username: string;
+		avatarUrl?: string;
+		points: number;
+		currentTier: { minPoints: number; roleId: string } | null;
+		nextTier: { minPoints: number; roleId: string } | null;
+	}): Embed {
+		const progressText = data.nextTier
+			? `${data.points} / ${data.nextTier.minPoints} para <@&${data.nextTier.roleId}>`
+			: `${data.points} pts — nivel máximo alcanzado`;
+
+		const tierText = data.currentTier
+			? `<@&${data.currentTier.roleId}>`
+			: "*Sin rol de reputación aún*";
+
+		return new Embed()
+			.setTitle(`Reputación de ${data.username}`)
+			.setColor("Blue")
+			.setThumbnail(data.avatarUrl || "")
+			.addFields([
+				{ name: "Puntos", value: `**${data.points}**`, inline: true },
+				{ name: "Rango actual", value: tierText, inline: true },
+				{ name: "Progreso", value: progressText, inline: false },
+			])
+			.setFooter({ text: `ID: ${data.userId}` })
+			.setTimestamp();
+	},
+
+	repLogEmbed(data: {
+		receiverId: string;
+		receiverName: string;
+		giverId: string;
+		giverName: string;
+		points: number;
+		newRoles: string[];
+	}): Embed {
+		const roleText =
+			data.newRoles.length > 0
+				? `\nNuevo rol: ${data.newRoles.map((r) => `<@&${r}>`).join(", ")}`
+				: "";
+		return new Embed()
+			.setTitle("Punto de reputación otorgado")
+			.setColor("Green")
+			.addFields([
+				{
+					name: "Ayudante",
+					value: `<@${data.receiverId}> (${data.receiverName})`,
+					inline: true,
+				},
+				{ name: "Puntos totales", value: `**${data.points}**`, inline: true },
+				{
+					name: "Otorgado por",
+					value: `<@${data.giverId}> (${data.giverName})`,
+					inline: false,
+				},
+			])
+			.setDescription(roleText || undefined)
+			.setTimestamp();
+	},
+
 	modTopEmbed(data: {
 		period: string;
 		moderators: Array<{

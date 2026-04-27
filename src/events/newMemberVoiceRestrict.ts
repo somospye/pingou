@@ -26,6 +26,12 @@ async function handleVoiceRestrict(
 		.addRole(member.guildId, member.id, roleId)
 		.catch(() => {});
 
+	if (CONFIG.ROLES.NOVATO) {
+		await client.members
+			.addRole(member.guildId, member.id, CONFIG.ROLES.NOVATO)
+			.catch(() => {});
+	}
+
 	const expiresAt = new Date(Date.now() + SIX_HOURS_MS);
 	await voiceRestrictService.saveRestriction(
 		member.id,
