@@ -6,14 +6,14 @@ import {
 	type UsingClient,
 } from "seyfert";
 import { ButtonStyle } from "seyfert/lib/types";
+import { CONFIG } from "../config/config";
+import { JobType } from "../database/schemas/schedules";
 import {
 	bumpRepository,
 	type LastBumpType,
 } from "../repositories/bumpRepository";
-import { CONFIG } from "../config/config";
-import { JobType } from "../database/schemas/schedules";
-import { schedulerService } from "./scheduler";
 import { Embeds } from "../utils/embeds";
+import { schedulerService } from "./scheduler";
 
 const JOB_TYPE = JobType.BumpReminder;
 const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas

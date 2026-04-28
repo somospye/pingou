@@ -3,8 +3,8 @@ import { ButtonStyle } from "seyfert/lib/types";
 import { CONFIG } from "../config/config";
 import { pendingRepRepository } from "../repositories/pendingRepRepository";
 import { aiService } from "../services/ai";
-import { cooldownService } from "../services/cooldown";
 import { bumpService } from "../services/bumpService";
+import { cooldownService } from "../services/cooldown";
 import { Embeds } from "../utils/embeds";
 
 const DISBOARD_ID = "302050872383242240";

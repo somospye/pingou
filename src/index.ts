@@ -1,11 +1,11 @@
 import { Client, type ParseClient, type ParseMiddlewares } from "seyfert";
 import type { CONFIG } from "./config/config";
 import { middlewares } from "./middlewares";
+import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";
 import { moderationService } from "./services/moderationService";
 import { schedulerService } from "./services/scheduler";
 import { voiceRestrictService } from "./services/voiceRestrictService";
-import { bumpService } from "./services/bumpService";
 
 async function boostrap() {
 	const client = new Client();
