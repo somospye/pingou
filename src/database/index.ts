@@ -1,14 +1,9 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-
-const POSTGRES_URL = process.env.POSTGRES_URL;
-
-if (!POSTGRES_URL) {
-	throw new Error("Missing env variable: POSTGRES_URL");
-}
+import { env } from "../config/config";
 
 const pool = new Pool({
-	connectionString: POSTGRES_URL,
+	connectionString: env.POSTGRES_URL,
 });
 
 export const db = drizzle(pool);

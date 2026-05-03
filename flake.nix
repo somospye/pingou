@@ -16,12 +16,12 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-
         nativeBuildInputs = [
           pkgs.bun
-          pkgs.typescript-language-server
+          pkgs.vtsls
           pkgs.typescript
-          pkgs.husky
+          pkgs.lefthook
+          pkgs.biome
         ];
         buildInputs = with pkgs; [ ];
       in

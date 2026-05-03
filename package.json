@@ -3,7 +3,7 @@
 	"module": "index.ts",
 	"type": "module",
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.11",
+		"@biomejs/biome": "2.4.13",
 		"@commitlint/cli": "^20.5.0",
 		"@commitlint/config-conventional": "^20.5.0",
 		"@types/bun": "latest",
@@ -34,7 +34,8 @@
 		"@google/genai": "^1.50.0",
 		"drizzle-orm": "^0.45.2",
 		"pg": "^8.20.0",
-		"seyfert": "^4.3.0"
+		"seyfert": "^4.3.0",
+		"zod": "^4.3.6"
 	},
 	"private": true,
 	"lint-staged": {

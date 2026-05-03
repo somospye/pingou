@@ -1,5 +1,10 @@
+import z from "zod";
+
 export const CONFIG = {
 	GUILD_ID: "",
+	EMOJIS: {
+		PEPEDOWN: "768544166581633044",
+	},
 	ROLES: {
 		ADMIN: "1400004966042701834",
 		MODERATOR: "1400004966029983793",
@@ -9,6 +14,7 @@ export const CONFIG = {
 		PRIORITY_RECRUITER: "",
 		EVERYONE: "",
 		NOVATO: "1400004966000623621",
+		PEPEDOWN: "1400004966029983790",
 	},
 	RESTRICTIONS: {
 		VOZ: "1497370444058198207",
@@ -41,3 +47,24 @@ export const CONFIG = {
 		{ minPoints: 70, roleId: "1400004966009147435" }, // Experto
 	],
 };
+
+const Envscheme = z.object({
+	POSTGRES_URL: z.string(),
+	BOT_TOKEN: z.string(),
+	PUBLIC_KEY: z.string(),
+	PORT: z.coerce.number(),
+});
+type Env = z.infer<typeof Envscheme>;
+
+const Environment = (): Env => {
+	const result = Envscheme.safeParse(process.env);
+	if (!result.success) {
+		const errorMessages = result.error.issues.map(
+			(issue) => `Field ${issue.path.join(".")} | Error ${issue.message}`,
+		);
+		throw new Error(`Invalid Environment Variables:\n${errorMessages}`);
+	}
+	return result.data;
+};
+
+export const env = Environment() as Env;
