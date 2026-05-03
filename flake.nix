@@ -16,12 +16,12 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-
         nativeBuildInputs = [
           pkgs.bun
           pkgs.vtsls
           pkgs.typescript
           pkgs.lefthook
+          pkgs.biome
         ];
         buildInputs = with pkgs; [ ];
       in
