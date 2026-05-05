@@ -1,4 +1,5 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
+import { moderationService } from "@/services/moderationService";
 import { Embeds } from "@/utils/embeds";
 import {
 	buildCasePaginationRow,
@@ -6,7 +7,6 @@ import {
 	getCasesChunk,
 	getTotalCasePages,
 } from "@/utils/moderation";
-import { moderationService } from "../services/moderationService";
 
 export default class CasePagination extends ComponentCommand {
 	override componentType = "Button" as const;
