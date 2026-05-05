@@ -1,6 +1,6 @@
 import { Command, type CommandContext, Declare } from "seyfert";
-import { CONFIG } from "../config/config";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { Embeds } from "@/utils/embeds";
 
 @Declare({
 	name: "ping",

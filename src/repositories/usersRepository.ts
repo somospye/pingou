@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
-import { db } from "../database";
-import { users } from "../database/schemas/users";
+import { db } from "@/database";
+import { users } from "@/database/schemas/users";
 
 export class UsersRepository {
 	async findOrCreate(userId: string) {

@@ -1,5 +1,5 @@
 import { Client, type ParseClient, type ParseMiddlewares } from "seyfert";
-import type { CONFIG } from "./config/config";
+import type { CONFIG } from "./config";
 import { middlewares } from "./middlewares";
 import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";

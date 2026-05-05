@@ -1,7 +1,7 @@
 import type { GenerateContentResponseUsageMetadata } from "@google/genai";
 import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
-import { CONFIG } from "../config/config";
-import type { CreateRepLogI } from "../services/reputationService";
+import { CONFIG } from "@/config";
+import type { CreateRepLogI } from "@/services/reputationService";
 import { formatDurationForModEmbed } from "./duration";
 
 export function hasEmbed(

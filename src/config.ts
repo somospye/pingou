@@ -4,6 +4,7 @@ export const CONFIG = {
 	GUILD_ID: "",
 	EMOJIS: {
 		PEPEDOWN: "768544166581633044",
+		STAR: "⭐",
 	},
 	ROLES: {
 		ADMIN: "1400004966042701834",
@@ -46,6 +47,22 @@ export const CONFIG = {
 		{ minPoints: 60, roleId: "1400004966009147434" }, // Sabio
 		{ minPoints: 70, roleId: "1400004966009147435" }, // Experto
 	],
+	OTHER: {
+		DISBOARD_ID: "302050872383242240",
+		THANKS_TERMS: [
+			"gracias",
+			"grax",
+			"grac",
+			"muchas gracias",
+			"mil gracias",
+			"muchisimas gracias",
+			"thanks",
+			"thank you",
+			"thankyou",
+			"thx",
+			"ty",
+		],
+	},
 };
 
 const Envscheme = z.object({

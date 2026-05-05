@@ -8,7 +8,7 @@ import { ButtonStyle, MessageFlags } from "seyfert/lib/types";
 import {
 	type ModActionType,
 	moderationService,
-} from "../services/moderationService";
+} from "@/services/moderationService";
 import { Embeds } from "./embeds";
 
 interface BasicUserLike {

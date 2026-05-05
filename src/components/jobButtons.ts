@@ -1,9 +1,9 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
-import { CONFIG } from "../config/config";
-import { jobReputationRepository } from "../repositories/jobReputationRepository";
-import { jobService } from "../services/jobService";
-import { Embeds } from "../utils/embeds";
-import { fetchDisplayUser } from "../utils/moderation";
+import { CONFIG } from "@/config";
+import { jobReputationRepository } from "@/repositories/jobReputationRepository";
+import { jobService } from "@/services/jobService";
+import { Embeds } from "@/utils/embeds";
+import { fetchDisplayUser } from "@/utils/moderation";
 
 export default class JobButtons extends ComponentCommand {
 	override componentType = "Button" as const;

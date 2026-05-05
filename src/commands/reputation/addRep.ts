@@ -8,10 +8,10 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
-import { reputationService } from "../../services/reputationService";
-import { Embeds } from "../../utils/embeds";
-import { cleanString } from "../../utils/string";
+import { CONFIG } from "@/config";
+import { reputationService } from "@/services/reputationService";
+import { Embeds } from "@/utils/embeds";
+import { cleanString } from "@/utils/string";
 
 const options = {
 	usuario: createUserOption({

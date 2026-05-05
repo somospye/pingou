@@ -1,5 +1,5 @@
 import { createEvent } from "seyfert";
-import { inviteRepository } from "../repositories/inviteRepository";
+import { inviteRepository } from "@/repositories/inviteRepository";
 
 export default createEvent({
 	data: { once: false, name: "guildMemberRemove" },

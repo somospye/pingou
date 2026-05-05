@@ -1,7 +1,7 @@
 import { ActionRow, Button, createEvent } from "seyfert";
-import { CONFIG } from "../config/config";
-import { aiService } from "../services/ai";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { aiService } from "@/services/ai";
+import { Embeds } from "@/utils/embeds";
 
 const processedThreads = new Set<string>();
 

@@ -7,9 +7,9 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
-import { inviteRepository } from "../../repositories/inviteRepository";
-import { Embeds } from "../../utils/embeds";
+import { CONFIG } from "@/config";
+import { inviteRepository } from "@/repositories/inviteRepository";
+import { Embeds } from "@/utils/embeds";
 
 const options = {
 	usuario: createUserOption({

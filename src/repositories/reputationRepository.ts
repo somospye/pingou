@@ -1,5 +1,5 @@
-import { db } from "../database";
-import { repHistory } from "../database/schemas/repHistory";
+import { db } from "@/database";
+import { repHistory } from "@/database/schemas/repHistory";
 import { usersRepository } from "./usersRepository";
 
 export class ReputationRepository {

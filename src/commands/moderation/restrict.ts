@@ -8,10 +8,10 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
-import { moderationService } from "../../services/moderationService";
-import { formatDuration, parseDurationToSeconds } from "../../utils/duration";
-import { Embeds } from "../../utils/embeds";
+import { CONFIG } from "@/config";
+import { moderationService } from "@/services/moderationService";
+import { formatDuration, parseDurationToSeconds } from "@/utils/duration";
+import { Embeds } from "@/utils/embeds";
 import {
 	buildDisplayUser,
 	fetchTargetMember,
@@ -19,7 +19,7 @@ import {
 	replyModerationError,
 	validateModerationLimit,
 	validateModerationTarget,
-} from "../../utils/moderation";
+} from "@/utils/moderation";
 
 const options = {
 	usuario: createUserOption({

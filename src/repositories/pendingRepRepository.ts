@@ -1,15 +1,17 @@
 import { eq, like } from "drizzle-orm";
-import { db } from "../database";
-import { pendingRep } from "../database/schemas/pendingRep";
+import { db } from "@/database";
+import { pendingRep } from "@/database/schemas/pendingRep";
+
+interface Data {
+	id: string;
+	giverId: string;
+	receiverId: string;
+	originalMessageId: string;
+	originalChannelId: string;
+}
 
 export class PendingRepRepository {
-	async create(data: {
-		id: string;
-		giverId: string;
-		receiverId: string;
-		originalMessageId: string;
-		originalChannelId: string;
-	}) {
+	async create(data: Data) {
 		return await db.insert(pendingRep).values(data);
 	}
 

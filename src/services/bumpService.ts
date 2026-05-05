@@ -1,12 +1,12 @@
 import { ActionRow, Button, type Message, type UsingClient } from "seyfert";
 import { ButtonStyle } from "seyfert/lib/types";
-import { CONFIG } from "../config/config";
-import { JobType } from "../database/schemas/schedules";
+import { CONFIG } from "@/config";
+import { JobType } from "@/database/schemas/schedules";
 import {
 	bumpRepository,
 	type LastBumpType,
-} from "../repositories/bumpRepository";
-import { Embeds, hasEmbed } from "../utils/embeds";
+} from "@/repositories/bumpRepository";
+import { Embeds, hasEmbed } from "@/utils/embeds";
 import { schedulerService } from "./scheduler";
 
 const JOB_TYPE = JobType.BumpReminder;

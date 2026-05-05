@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "../database";
-import { type JobType, schedules } from "../database/schemas/schedules";
+import { db } from "@/database";
+import { type JobType, schedules } from "@/database/schemas/schedules";
 
 export class SchedulerRepository {
 	async upsert(id: string, userId: string, jobType: JobType, expiresAt: Date) {

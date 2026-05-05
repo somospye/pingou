@@ -1,5 +1,5 @@
 import { config } from "seyfert";
-import { env } from "./src/config/config";
+import { env } from "@/config";
 
 export default config.bot({
 	token: env?.BOT_TOKEN,

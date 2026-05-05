@@ -1,17 +1,19 @@
 import { eq } from "drizzle-orm";
-import { db } from "../database";
-import { pendingJobs } from "../database/schemas/jobs";
+import { db } from "@/database";
+import { pendingJobs } from "@/database/schemas/jobs";
+
+interface Data {
+	id: string;
+	userId: string;
+	title: string;
+	description: string;
+	requirements: string;
+	salary?: string;
+	contact: string;
+}
 
 export class JobRepository {
-	async createPending(data: {
-		id: string;
-		userId: string;
-		title: string;
-		description: string;
-		requirements: string;
-		salary?: string;
-		contact: string;
-	}) {
+	async createPending(data: Data) {
 		return await db.insert(pendingJobs).values(data);
 	}
 

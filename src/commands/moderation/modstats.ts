@@ -7,12 +7,9 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
-import {
-	moderationService,
-	type Period,
-} from "../../services/moderationService";
-import { Embeds } from "../../utils/embeds";
+import { CONFIG } from "@/config";
+import { moderationService, type Period } from "@/services/moderationService";
+import { Embeds } from "@/utils/embeds";
 
 const PERIOD_LABELS: Record<Period, string> = {
 	weekly: "Última semana",

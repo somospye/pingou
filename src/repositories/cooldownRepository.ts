@@ -1,6 +1,6 @@
 import { eq, like, lt } from "drizzle-orm";
-import { db } from "../database";
-import { cooldowns } from "../database/schemas/cooldowns";
+import { db } from "@/database";
+import { cooldowns } from "@/database/schemas/cooldowns";
 
 export class CooldownRepository {
 	async upsert(id: string, userId: string, key: string, expiresAt: Date) {

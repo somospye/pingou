@@ -1,17 +1,19 @@
 import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
-import { db } from "../database";
-import { modActions, modUsageLimits } from "../database/schemas/modActions";
+import { db } from "@/database";
+import { modActions, modUsageLimits } from "@/database/schemas/modActions";
+
+interface Data {
+	type: "ban" | "kick" | "mute" | "warn" | "restrict";
+	targetUserId: string;
+	moderatorId: string;
+	guildId: string;
+	reason: string;
+	duration?: number;
+	extra?: string;
+}
 
 export class ModActionRepository {
-	async create(data: {
-		type: "ban" | "kick" | "mute" | "warn" | "restrict";
-		targetUserId: string;
-		moderatorId: string;
-		guildId: string;
-		reason: string;
-		duration?: number;
-		extra?: string;
-	}) {
+	async create(data: Data) {
 		const results = await db.insert(modActions).values(data).returning();
 		const row = results[0];
 		if (!row) throw new Error("Failed to insert mod action");

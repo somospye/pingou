@@ -1,7 +1,7 @@
 import type { UsingClient } from "seyfert";
-import { CONFIG } from "../config/config";
-import { modActionRepository } from "../repositories/modActionRepository";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { modActionRepository } from "@/repositories/modActionRepository";
+import { Embeds } from "@/utils/embeds";
 
 export type ModActionType = "ban" | "kick" | "mute" | "warn" | "restrict";
 export type Period = "weekly" | "monthly" | "all";

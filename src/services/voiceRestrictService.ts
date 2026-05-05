@@ -1,7 +1,7 @@
 import type { UsingClient } from "seyfert";
-import { CONFIG } from "../config/config";
-import { cooldownRepository } from "../repositories/cooldownRepository";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { cooldownRepository } from "@/repositories/cooldownRepository";
+import { Embeds } from "@/utils/embeds";
 
 const KEY_PREFIX = "voice_restrict:";
 

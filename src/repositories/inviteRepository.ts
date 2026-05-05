@@ -1,8 +1,8 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "../database";
-import { inviteJoins } from "../database/schemas/inviteJoins";
-import { inviteStats } from "../database/schemas/inviteStats";
-import { invites } from "../database/schemas/invites";
+import { db } from "@/database";
+import { inviteJoins } from "@/database/schemas/inviteJoins";
+import { inviteStats } from "@/database/schemas/inviteStats";
+import { invites } from "@/database/schemas/invites";
 
 export class InviteRepository {
 	async upsertInvite(

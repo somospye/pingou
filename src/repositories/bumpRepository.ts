@@ -1,6 +1,6 @@
 import { desc, eq, sql } from "drizzle-orm";
-import { db } from "../database";
-import { bumps } from "../database/schemas/bumps";
+import { db } from "@/database";
+import { bumps } from "@/database/schemas/bumps";
 
 export type LastBumpType = typeof bumps.$inferSelect & { remaining: number };
 

@@ -1,8 +1,8 @@
 import { ActionRow, Button, ModalCommand, type ModalContext } from "seyfert";
 import { ButtonStyle, MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../config/config";
-import { jobService } from "../services/jobService";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { jobService } from "@/services/jobService";
+import { Embeds } from "@/utils/embeds";
 
 export default class JobModal extends ModalCommand {
 	override filter(ctx: ModalContext) {

@@ -1,7 +1,7 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { BUMP_BUTTON_ID, bumpService } from "../services/bumpService";
-import { Embeds } from "../utils/embeds";
+import { BUMP_BUTTON_ID, bumpService } from "@/services/bumpService";
+import { Embeds } from "@/utils/embeds";
 
 export default class BumpRoleButton extends ComponentCommand {
 	override componentType = "Button" as const;

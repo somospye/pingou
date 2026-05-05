@@ -1,5 +1,5 @@
 import { createEvent } from "seyfert";
-import { inviteService } from "../services/inviteService";
+import { inviteService } from "@/services/inviteService";
 
 export default createEvent({
 	data: { once: true, name: "guildsReady" },

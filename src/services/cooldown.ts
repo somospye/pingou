@@ -1,4 +1,4 @@
-import { cooldownRepository } from "../repositories/cooldownRepository";
+import { cooldownRepository } from "@/repositories/cooldownRepository";
 
 export class CooldownService {
 	async setCooldown(userId: string, key: string, seconds: number) {

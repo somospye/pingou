@@ -10,7 +10,7 @@ import {
 import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 import { moderationService } from "@/services/moderationService";
-import { Embeds } from "@/utils/embeds";
+import { Embeds } from "../../utils/embeds";
 import {
 	buildDisplayUser,
 	fetchTargetMember,

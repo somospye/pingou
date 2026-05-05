@@ -1,7 +1,7 @@
 import type { UsingClient } from "seyfert";
-import { CONFIG } from "../config/config";
-import { jobRepository } from "../repositories/jobRepository";
-import { jobReputationRepository } from "../repositories/jobReputationRepository";
+import { CONFIG } from "@/config";
+import { jobRepository } from "@/repositories/jobRepository";
+import { jobReputationRepository } from "@/repositories/jobReputationRepository";
 
 export class JobService {
 	async createPendingJob(data: {

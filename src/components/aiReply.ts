@@ -1,6 +1,6 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
-import { aiService } from "../services/ai";
-import { Embeds } from "../utils/embeds";
+import { aiService } from "@/services/ai";
+import { Embeds } from "@/utils/embeds";
 
 export default class AIReplyButton extends ComponentCommand {
 	override componentType = "Button" as const;

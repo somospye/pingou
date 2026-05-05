@@ -5,10 +5,10 @@ import {
 	type ComponentContext,
 } from "seyfert";
 import { ButtonStyle, MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../config/config";
-import { pendingRepRepository } from "../repositories/pendingRepRepository";
-import { reputationService } from "../services/reputationService";
-import { Embeds, hasEmbed } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { pendingRepRepository } from "@/repositories/pendingRepRepository";
+import { reputationService } from "@/services/reputationService";
+import { Embeds, hasEmbed } from "@/utils/embeds";
 
 type RawEmbed = {
 	fields?: Array<{ name: string; value: string; inline?: boolean }>;

@@ -1,5 +1,7 @@
 import { createEvent } from "seyfert";
-import { CONFIG } from "../config/config";
+import { CONFIG } from "@/config";
+
+const PEPEDOWN_TIME_BASE = 1000 * 60 * 60;
 
 export default createEvent({
 	data: { once: false, name: "messageReactionAdd" },
@@ -31,12 +33,9 @@ export default createEvent({
 					});
 				}
 
-				setTimeout(
-					() => {
-						user.members.removeRole(guild, memberId, CONFIG.ROLES.PEPEDOWN);
-					},
-					1000 * 60 * 60,
-				);
+				setTimeout(() => {
+					user.members.removeRole(guild, memberId, CONFIG.ROLES.PEPEDOWN);
+				}, PEPEDOWN_TIME_BASE);
 			}
 		} catch (e) {
 			console.error(e);

@@ -7,9 +7,9 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
-import { inviteService } from "../../services/inviteService";
-import { Embeds } from "../../utils/embeds";
+import { CONFIG } from "@/config";
+import { inviteService } from "@/services/inviteService";
+import { Embeds } from "@/utils/embeds";
 
 const options = {
 	codigo: createStringOption({

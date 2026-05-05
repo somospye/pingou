@@ -1,6 +1,6 @@
 import type { UsingClient } from "seyfert";
-import type { JobType } from "../database/schemas/schedules";
-import { schedulerRepository } from "../repositories/schedulerRepository";
+import type { JobType } from "@/database/schemas/schedules";
+import { schedulerRepository } from "@/repositories/schedulerRepository";
 
 type JobHandler = (client: UsingClient, userId: string) => Promise<void>;
 

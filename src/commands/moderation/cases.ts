@@ -7,14 +7,14 @@ import {
 	Options,
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
-import { moderationService } from "../../services/moderationService";
-import { Embeds } from "../../utils/embeds";
+import { moderationService } from "@/services/moderationService";
+import { Embeds } from "@/utils/embeds";
 import {
 	buildCasePaginationRow,
 	CASES_PER_PAGE,
 	getCasesChunk,
 	getTotalCasePages,
-} from "../../utils/moderation";
+} from "@/utils/moderation";
 
 const options = {
 	usuario: createUserOption({

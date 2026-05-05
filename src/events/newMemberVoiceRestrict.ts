@@ -1,10 +1,10 @@
 import { createEvent } from "seyfert";
-import { CONFIG } from "../config/config";
-import { inviteRepository } from "../repositories/inviteRepository";
-import { usersRepository } from "../repositories/usersRepository";
-import { inviteService } from "../services/inviteService";
-import { voiceRestrictService } from "../services/voiceRestrictService";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { inviteRepository } from "@/repositories/inviteRepository";
+import { usersRepository } from "@/repositories/usersRepository";
+import { inviteService } from "@/services/inviteService";
+import { voiceRestrictService } from "@/services/voiceRestrictService";
+import { Embeds } from "@/utils/embeds";
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 

@@ -1,26 +1,11 @@
 import { ActionRow, Button, createEvent } from "seyfert";
 import { ButtonStyle } from "seyfert/lib/types";
-import { CONFIG } from "../config/config";
-import { pendingRepRepository } from "../repositories/pendingRepRepository";
-import { aiService } from "../services/ai";
-import { bumpService } from "../services/bumpService";
-import { cooldownService } from "../services/cooldown";
-import { Embeds } from "../utils/embeds";
-
-const DISBOARD_ID = "302050872383242240";
-const THANKS_TERMS = [
-	"gracias",
-	"grax",
-	"grac",
-	"muchas gracias",
-	"mil gracias",
-	"muchisimas gracias",
-	"thanks",
-	"thank you",
-	"thankyou",
-	"thx",
-	"ty",
-];
+import { CONFIG } from "@/config";
+import { pendingRepRepository } from "@/repositories/pendingRepRepository";
+import { aiService } from "@/services/ai";
+import { bumpService } from "@/services/bumpService";
+import { cooldownService } from "@/services/cooldown";
+import { Embeds } from "@/utils/embeds";
 
 function normalizeText(text: string): string {
 	return text
@@ -33,7 +18,7 @@ function normalizeText(text: string): string {
 
 function containsThanks(text: string): boolean {
 	const normalized = normalizeText(text);
-	return THANKS_TERMS.some((term) =>
+	return CONFIG.OTHER.THANKS_TERMS.some((term) =>
 		new RegExp(`\\b${term}\\b`).test(normalized),
 	);
 }
@@ -41,7 +26,7 @@ function containsThanks(text: string): boolean {
 export default createEvent({
 	data: { once: false, name: "messageCreate" },
 	async run(message, client) {
-		if (message.author.id === DISBOARD_ID) {
+		if (message.author.id === CONFIG.OTHER.DISBOARD_ID) {
 			await bumpService.handleBump(message);
 			return;
 		}

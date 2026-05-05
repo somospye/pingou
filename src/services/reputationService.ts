@@ -1,7 +1,7 @@
 import type { GuildMemberStructure, UsingClient } from "seyfert";
-import { CONFIG } from "../config/config";
-import { reputationRepository } from "../repositories/reputationRepository";
-import { Embeds } from "../utils/embeds";
+import { CONFIG } from "@/config";
+import { reputationRepository } from "@/repositories/reputationRepository";
+import { Embeds } from "@/utils/embeds";
 
 export interface CreateRepLogI {
 	receiverId: string;

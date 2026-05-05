@@ -1,5 +1,5 @@
 import type { UsingClient } from "seyfert";
-import { inviteRepository } from "../repositories/inviteRepository";
+import { inviteRepository } from "@/repositories/inviteRepository";
 
 class InviteService {
 	private cache = new Map<string, Map<string, number>>();

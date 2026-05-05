@@ -8,7 +8,7 @@ import {
 	TextInput,
 } from "seyfert";
 import { MessageFlags, TextInputStyle } from "seyfert/lib/types";
-import { CONFIG } from "../../config/config";
+import { CONFIG } from "@/config";
 
 @Declare({
 	name: "empleo",
