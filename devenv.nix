@@ -1,5 +1,9 @@
-{pkgs, ...}: {
-  packages = with pkgs; [bun husky lazysql];
+{ pkgs, ... }:
+{
+  packages = with pkgs; [
+    husky
+    lazysql
+  ];
 
   dotenv.enable = true;
 
@@ -28,5 +32,8 @@
     };
   };
 
-  languages.typescript.enable = true;
+  languages.javascript = {
+    enable = true;
+    bun.enable = true;
+  };
 }
