@@ -145,7 +145,6 @@ vite.config.ts.timestamp-*
 # Db
 postgres_data/
 drizzle/
-commands.json
 
 # Devenv
 .devenv*
@@ -157,3 +156,7 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
+# Seyfert
+commands.json
+
