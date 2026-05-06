@@ -1,9 +1,9 @@
 { pkgs, ... }:
 {
   packages = with pkgs; [
-    husky
     lazysql
     biome
+    lefthook
   ];
 
   dotenv.enable = true;
