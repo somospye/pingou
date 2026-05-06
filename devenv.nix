@@ -3,6 +3,7 @@
   packages = with pkgs; [
     husky
     lazysql
+    biome
   ];
 
   dotenv.enable = true;
