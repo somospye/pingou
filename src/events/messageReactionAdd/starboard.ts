@@ -1,6 +1,22 @@
-import type { UsingClient } from "seyfert";
-import type { ObjectToLower } from "seyfert/lib/common";
-import type { GatewayMessageReactionAddDispatchData } from "seyfert/lib/types";
+import {
+	ActionRow,
+	Button,
+	Container,
+	MediaGallery,
+	MediaGalleryItem,
+	type Message,
+	TextDisplay,
+	type UsingClient,
+} from "seyfert";
+import type {
+	MessageCreateBodyRequest,
+	ObjectToLower,
+} from "seyfert/lib/common";
+import {
+	ButtonStyle,
+	type GatewayMessageReactionAddDispatchData,
+	MessageFlags,
+} from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 
 const STAR_THRESHOLD = 1;
@@ -58,12 +74,7 @@ export async function handleStarboard(
 		return;
 	}
 
-	const content = buildStarboardContent(count, {
-		content: msg.content,
-		channelId: reaction.channelId,
-		id: reaction.messageId,
-		guildId: reaction.guildId,
-	});
+	const content = buildStarboardContent(count, msg);
 
 	const existingStarboardId = messageStore.get(reaction.messageId);
 	if (existingStarboardId) {
@@ -71,7 +82,7 @@ export async function handleStarboard(
 			await client.messages.edit(
 				existingStarboardId,
 				CONFIG.CHANNELS.STARBOARD,
-				{ content },
+				content,
 			);
 		} catch (err) {
 			client.logger.error("[starboard] failed to edit starboard message:", err);
@@ -80,9 +91,10 @@ export async function handleStarboard(
 	}
 
 	try {
-		const posted = await client.messages.write(CONFIG.CHANNELS.STARBOARD, {
+		const posted = await client.messages.write(
+			CONFIG.CHANNELS.STARBOARD,
 			content,
-		});
+		);
 		messageStore.set(reaction.messageId, posted.id);
 	} catch (err) {
 		client.logger.error("[starboard] failed to post to starboard:", err);
@@ -91,15 +103,45 @@ export async function handleStarboard(
 
 function buildStarboardContent(
 	count: number,
-	originalMsg: {
-		content?: string;
-		channelId: string;
-		id: string;
-		guildId?: string;
-	},
-): string {
-	const jump = originalMsg.guildId
-		? `\nhttps://discord.com/channels/${originalMsg.guildId}/${originalMsg.channelId}/${originalMsg.id}`
-		: "";
-	return `:star: **${count}** | <#${originalMsg.channelId}>${jump}\n\n${originalMsg.content ?? "*(sin contenido)*"}`;
+	originalMsg: Message,
+): MessageCreateBodyRequest {
+	const container = new Container()
+		.addComponents(
+			new TextDisplay().setContent(
+				`-# Mensaje de ${originalMsg.author.toString()} en <#${originalMsg.channelId}>`,
+			),
+		)
+		.setColor("Blue");
+
+	if (originalMsg.content.length > 0) {
+		container.addComponents(new TextDisplay().setContent(originalMsg.content));
+	}
+
+	if (originalMsg.attachments.length > 0) {
+		const gallery = new MediaGallery();
+		originalMsg.attachments.map((att) =>
+			gallery.addItems(new MediaGalleryItem().setMedia(att.proxyUrl)),
+		);
+		container.addComponents(gallery);
+	}
+
+	const buttons = new ActionRow().addComponents(
+		new Button()
+			.setStyle(ButtonStyle.Secondary)
+			.setCustomId("starboard")
+			.setDisabled(true)
+			.setEmoji(CONFIG.EMOJIS.STAR)
+			.setLabel(count.toString()),
+		new Button()
+			.setStyle(ButtonStyle.Link)
+			.setURL(
+				`https://discord.com/channels/${originalMsg.guildId}/${originalMsg.channelId}/${originalMsg.id}`,
+			)
+			.setLabel("Ir al mensaje"),
+	);
+
+	return {
+		components: [container, buttons],
+		flags: MessageFlags.IsComponentsV2,
+	};
 }

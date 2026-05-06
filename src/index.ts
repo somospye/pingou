@@ -8,7 +8,11 @@ import { schedulerService } from "./services/scheduler";
 import { voiceRestrictService } from "./services/voiceRestrictService";
 
 async function boostrap() {
-	const client = new Client();
+	const client = new Client({
+		allowedMentions: {
+			parse: [],
+		},
+	});
 
 	client.setServices({
 		middlewares: middlewares,
