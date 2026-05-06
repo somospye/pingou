@@ -4,6 +4,7 @@
     lazysql
     biome
     lefthook
+    bun
   ];
 
   dotenv.enable = true;
@@ -31,10 +32,5 @@
       listen_addresses = "127.0.0.1";
       port = 5432;
     };
-  };
-
-  languages.javascript = {
-    enable = true;
-    bun.enable = true;
   };
 }
