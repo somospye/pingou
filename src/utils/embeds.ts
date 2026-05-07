@@ -3,6 +3,7 @@ import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
 import { CONFIG } from "@/config";
 import type { CreateRepLogI } from "@/services/reputationService";
 import { formatDurationForModEmbed } from "./duration";
+import type { SystemStats } from "./system";
 
 export function hasEmbed(
 	embeds: InMessageEmbed[],
@@ -631,6 +632,42 @@ export const Embeds = {
 			.setTitle(`Top Moderadores — ${data.period}`)
 			.setDescription(lines.join("\n\n"))
 			.setColor(0xf1c40f)
+			.setTimestamp();
+	},
+
+	systemStatsEmbed(
+		stats: SystemStats,
+		formatBytes: (bytes: number) => string,
+		formatUptime: (seconds: number) => string,
+	): Embed {
+		const cpuField = {
+			name: "CPU",
+			value: `${stats.cpu.brand} (${stats.cpu.cores}C/${stats.cpu.physicalCores}P)\nUso: ${stats.cpu.load.toFixed(2)}% | ${stats.cpu.speed}GHz`,
+			inline: false,
+		};
+
+		const memField = {
+			name: "Memoria RAM",
+			value: `Total: ${formatBytes(stats.mem.total)}\nUsado: ${formatBytes(stats.mem.used)} (${stats.mem.usedPercent.toFixed(2)}%)\nLibre: ${formatBytes(stats.mem.free)}`,
+			inline: false,
+		};
+
+		const osField = {
+			name: "Sistema",
+			value: `${stats.os.distro} ${stats.os.release}\nUptime: ${formatUptime(stats.os.uptime)}`,
+			inline: false,
+		};
+
+		const diskFields = stats.disk.slice(0, 3).map((d) => ({
+			name: `Disco: ${d.mount}`,
+			value: `Total: ${formatBytes(d.size)}\nUsado: ${formatBytes(d.used)} (${d.use}%)\nLibre: ${formatBytes(d.available)}\nTipo: ${d.type}`,
+			inline: true,
+		}));
+
+		return new Embed()
+			.setTitle("📊 Estadísticas del Sistema")
+			.addFields([cpuField, memField, osField, ...diskFields])
+			.setColor("Blue")
 			.setTimestamp();
 	},
 };

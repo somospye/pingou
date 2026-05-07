@@ -1,8 +1,7 @@
----
+sol---
 <img src="https://github.com/somospye/.github/blob/e0ab2bf61b679d7746e5c1114baa5f37c354d778/assets/pyebanner.png" />
 
-Somos la comunidad hispana más grande de **programación** y **estudio** en Discord. [¡Siéntase bienvenido/a!](https://discord.gg/programacion) 😄
----
+## Somos la comunidad hispana más grande de **programación** y **estudio** en Discord. [¡Siéntase bienvenido/a!](https://discord.gg/programacion) 😄
 
 <div align="center">
   <img src="assets/Avatar.png" alt="PyEGo Logo" width="150" />
