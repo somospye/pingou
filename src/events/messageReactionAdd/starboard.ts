@@ -19,7 +19,7 @@ import {
 } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 
-const STAR_THRESHOLD = 1;
+const STAR_THRESHOLD = 3;
 
 const messageStore = new Map<string, string>();
 
