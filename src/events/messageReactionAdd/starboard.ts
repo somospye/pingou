@@ -134,9 +134,7 @@ function buildStarboardContent(
 			.setLabel(count.toString()),
 		new Button()
 			.setStyle(ButtonStyle.Link)
-			.setURL(
-				`https://discord.com/channels/${originalMsg.guildId}/${originalMsg.channelId}/${originalMsg.id}`,
-			)
+			.setURL(originalMsg.url)
 			.setLabel("Ir al mensaje"),
 	);
 
