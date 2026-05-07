@@ -95,13 +95,25 @@ export default createEvent({
 				.reverse()
 				.map((m) => `${m.author.username}: ${m.content ?? ""}`);
 
-			const { text, usage } = await aiService.chat(promptMessages);
+			try {
+				const { text, usage } = await aiService.chat(promptMessages);
 
-			await cooldownService.setCooldown(userId, cooldownKey, 15);
+				await cooldownService.setCooldown(userId, cooldownKey, 15);
 
-			const embeds = Embeds.aiReplyEmbeds(text, usage);
-			for (const embed of embeds) {
-				await message.reply({ embeds: [embed] });
+				const embeds = Embeds.aiReplyEmbeds(text, usage);
+				for (const embed of embeds) {
+					await message.reply({ embeds: [embed] });
+				}
+			} catch (error) {
+				console.error("Error in AI mention reply:", error);
+				await message.reply({
+					embeds: [
+						Embeds.errorEmbed(
+							"Error de IA",
+							"Ocurrió un error al procesar tu pregunta. Por favor, intentá más tarde.",
+						),
+					],
+				});
 			}
 			return;
 		}
