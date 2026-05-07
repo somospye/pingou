@@ -28,6 +28,25 @@ export class UsersRepository {
 		return result[0]?.rep ?? 0;
 	}
 
+	async decrementRep(userId: string, points: number) {
+		await this.findOrCreate(userId);
+		const result = await db
+			.update(users)
+			.set({ rep: sql`${users.rep} - ${points}` })
+			.where(eq(users.userId, userId))
+			.returning();
+		return result[0]?.rep ?? 0;
+	}
+
+	async getTopRep(limit = 10) {
+		const result = await db
+			.select()
+			.from(users)
+			.orderBy(sql`${users.rep} DESC`)
+			.limit(limit);
+		return result;
+	}
+
 	async incrementRepEmpleos(userId: string, points: number) {
 		await this.findOrCreate(userId);
 		const result = await db

@@ -166,33 +166,54 @@ export class AIService {
 			throw new Error("Missing AI_API_KEY env variable");
 		}
 
-		const result = await this.ai.models.generateContent({
-			model: this.model,
-			config: {
-				safetySettings: SAFETY_SETTINGS,
-				candidateCount: 1,
-				maxOutputTokens: 800,
-				temperature: 0.68,
-				topK: 35,
-				topP: 0.77,
-				responseModalities: [Modality.TEXT],
-			},
-			contents: [
-				{
-					role: "model",
-					parts: [{ text: BOT_PROMPT }],
+		try {
+			const result = await this.ai.models.generateContent({
+				model: this.model,
+				config: {
+					safetySettings: SAFETY_SETTINGS,
+					candidateCount: 1,
+					maxOutputTokens: 800,
+					temperature: 0.68,
+					topK: 35,
+					topP: 0.77,
+					responseModalities: [Modality.TEXT],
 				},
-				{
-					role: "user",
-					parts: messages.map((m) => ({ text: m })),
-				},
-			],
-		});
+				contents: [
+					{
+						role: "model",
+						parts: [{ text: BOT_PROMPT }],
+					},
+					{
+						role: "user",
+						parts: messages.map((m) => ({ text: m })),
+					},
+				],
+			});
 
-		return {
-			text: result.text || "Ahora no puedo responder a esta pregunta.",
-			usage: result.usageMetadata,
-		};
+			return {
+				text: result.text || "Ahora no puedo responder a esta pregunta.",
+				usage: result.usageMetadata,
+			};
+		} catch (error: any) {
+			console.error("Gemini API error:", error);
+
+			const errorStr = JSON.stringify(error);
+			const isRateLimit =
+				error?.status === 429 ||
+				errorStr.includes("RESOURCE_EXHAUSTED") ||
+				errorStr.includes("rate limit") ||
+				errorStr.includes("quota exceeded");
+
+			if (isRateLimit) {
+				return {
+					text: "Estoy saturado por el momento (límite de uso alcanzado). Por favor, intentá de nuevo en unos minutos. 🔄",
+				};
+			}
+
+			return {
+				text: "Ocurrió un error al procesar tu pregunta. Por favor, intentá más tarde.",
+			};
+		}
 	}
 }
 

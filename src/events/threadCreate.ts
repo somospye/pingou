@@ -46,5 +46,24 @@ export default createEvent({
 			embeds: [embed],
 			components: [row],
 		});
+
+		const programadoresChannelId = CONFIG.CHANNELS.CHAT_PROGRAMADORES;
+		if (programadoresChannelId) {
+			const forumChannelName = forum.name || "foro";
+
+			const forumEmbed = Embeds.forumThreadEmbed({
+				title: thread.name,
+				threadId: thread.id,
+				ownerId: thread.ownerId!,
+				guildId: thread.guildId!,
+				forumName: forumChannelName,
+			});
+
+			await client.messages
+				.write(programadoresChannelId, {
+					embeds: [forumEmbed],
+				})
+				.catch(console.error);
+		}
 	},
 });

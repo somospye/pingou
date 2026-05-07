@@ -62,6 +62,53 @@ export class ReputationService {
 		};
 	}
 
+	async removeRepAndCheckRoles(
+		client: UsingClient,
+		data: AddRep,
+	): Promise<{
+		points: number;
+		prevPoints: number;
+		addedRoles: string[];
+		removedRoles: string[];
+	}> {
+		const {
+			guildId,
+			receiverId,
+			giverId,
+			amount = 1,
+			reason = "manual",
+		} = data;
+
+		const prevPoints = await reputationRepository.getReputation(receiverId);
+		const points = await reputationRepository.removeReputation(
+			receiverId,
+			giverId,
+			amount,
+			reason,
+		);
+
+		let member: GuildMemberStructure;
+		try {
+			member = await client.members.fetch(guildId, receiverId);
+		} catch {
+			return { points, prevPoints, addedRoles: [], removedRoles: [] };
+		}
+
+		const { added, removed } = await this.syncMemberTierRoles(
+			member,
+			points,
+			CONFIG.REP_TIERS,
+			CONFIG.ROLES.NOVATO,
+		);
+
+		return {
+			points,
+			prevPoints,
+			addedRoles: added,
+			removedRoles: removed,
+		};
+	}
+
 	async sendLogRep(client: UsingClient, data: CreateRepLogI) {
 		const channelId = CONFIG.CHANNELS.REP_LOG;
 		if (!channelId) {

@@ -172,6 +172,21 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	forumThreadEmbed(data: {
+		title: string;
+		threadId: string;
+		ownerId: string;
+		guildId: string;
+		forumName: string;
+	}): Embed {
+		return new Embed()
+			.setTitle(`📝 Nuevo hilo en el foro ${data.forumName}`)
+			.setDescription(`**${data.title}**\n<@${data.ownerId}> creó una consulta`)
+			.setURL(`https://discord.com/channels/${data.guildId}/${data.threadId}`)
+			.setColor("Green")
+			.setTimestamp();
+	},
+
 	modActionEmbed(data: {
 		caseId: number;
 		type: string;
@@ -575,6 +590,40 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	repRoleDownEmbed(data: {
+		userId: string;
+		roleNames: string[];
+		points: number;
+	}): Embed {
+		const rolesText = data.roleNames.join(", ");
+		return new Embed()
+			.setTitle("Bajaste de rango")
+			.setColor("Red")
+			.setDescription(
+				`<@${data.userId}> bajó de **${rolesText}** y ahora tiene **${data.points} puntos** de reputación.`,
+			)
+			.setTimestamp();
+	},
+
+	repTopEmbed(data: {
+		users: Array<{ userId: string; points: number }>;
+	}): Embed {
+		const lines =
+			data.users.length > 0
+				? data.users.map((u, i) => {
+						const medal =
+							i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+						return `${medal} <@${u.userId}> — **${u.points}** pts`;
+					})
+				: ["*Sin datos.*"];
+
+		return new Embed()
+			.setTitle("🏆 Top Reputación")
+			.setDescription(lines.join("\n"))
+			.setColor(0xf1c40f)
+			.setTimestamp();
+	},
+
 	repLogEmbed(data: CreateRepLogI): Embed {
 		const roleText =
 			data.newRoles.length > 0
@@ -668,6 +717,68 @@ export const Embeds = {
 			.setTitle("📊 Estadísticas del Sistema")
 			.addFields([cpuField, memField, osField, ...diskFields])
 			.setColor("Blue")
+			.setTimestamp();
+	},
+
+	topRepEmbed(data: {
+		users: Array<{ userId: string; points: number }>;
+		tipo: string;
+		period: string;
+	}): Embed {
+		const periodLabels: Record<string, string> = {
+			weekly: "última semana",
+			monthly: "último mes",
+			all: "todo el tiempo",
+		};
+
+		const tipoLabels: Record<string, string> = {
+			rep: "Reputación General",
+			empleos: "Reputación Empleos",
+		};
+
+		const lines =
+			data.users.length > 0
+				? data.users.map((u, i) => {
+						const medal =
+							i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+						return `${medal} <@${u.userId}> — **${u.points}** pt${u.points === 1 ? "o" : "s"}`;
+					})
+				: ["*Sin datos.*"];
+
+		return new Embed()
+			.setTitle(
+				`Top ${tipoLabels[data.tipo] ?? data.tipo} — ${periodLabels[data.period] ?? data.period}`,
+			)
+			.setDescription(lines.join("\n"))
+			.setColor(0xf1c40f)
+			.setTimestamp();
+	},
+
+	topNegativeEmbed(data: {
+		users: Array<{ userId: string; points: number }>;
+		period: string;
+	}): Embed {
+		const periodLabels: Record<string, string> = {
+			weekly: "última semana",
+			monthly: "último mes",
+			all: "todo el tiempo",
+		};
+
+		const lines =
+			data.users.length > 0
+				? data.users.map((u, i) => {
+						const medal =
+							i === 0 ? "😈" : i === 1 ? "👿" : i === 2 ? "💀" : `${i + 1}.`;
+						return `${medal} <@${u.userId}> — **${u.points}** pt${u.points === -1 ? "o" : "s"}`;
+					})
+				: ["*Sin datos.*"];
+
+		return new Embed()
+			.setTitle(
+				`Top Reputación Negativa — ${periodLabels[data.period] ?? data.period}`,
+			)
+			.setDescription(lines.join("\n"))
+			.setColor(0xe74c3c)
 			.setTimestamp();
 	},
 };
