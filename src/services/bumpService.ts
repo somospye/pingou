@@ -70,10 +70,6 @@ export class BumpService {
 			return cachedRoleId;
 		}
 
-		await client.messages.write(guildId, {
-			content: BUMP_ROLE_NAME,
-		});
-
 		const created = await client.roles.create(
 			guildId,
 			{
