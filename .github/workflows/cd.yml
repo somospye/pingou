@@ -35,41 +35,19 @@ jobs:
           docker push somospye/pingou:${{ github.sha }}
           docker push somospye/pingou:latest
 
-      - name: Create deployment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          DEPLOYMENT=$(curl -s -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/deployments \
-            -d '{
-              "ref": "${{ github.sha }}",
-              "environment": "production",
-              "auto_merge": false,
-              "required_contexts": [],
-              "transient_environment": false,
-              "description": "Deploy pingou via webhook + Docker"
-            }')
-
-          echo "DEPLOYMENT_ID=$(echo $DEPLOYMENT | jq -r '.id')" >> $GITHUB_ENV
-
       - name: Trigger homelab deploy
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
-          DEPLOYMENT_ID: ${{ env.DEPLOYMENT_ID }}
         run: |
           BODY=$(jq -n \
             --arg ref "refs/heads/main" \
             --arg sha "${{ github.sha }}" \
             --arg repo "${{ github.repository }}" \
-            --arg dep "$DEPLOYMENT_ID" \
             '{
               ref: $ref,
               after: $sha,
-              repository: { full_name: $repo },
-              deployment_id: ($dep | tonumber)
+              repository: { full_name: $repo }
             }')
 
           SIG=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$DEPLOY_SECRET" | sed 's/^.* //')
