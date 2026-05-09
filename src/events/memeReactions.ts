@@ -5,9 +5,12 @@ export default createEvent({
 	data: { once: false, name: "messageCreate" },
 	async run(message, client) {
 		if (message.author.bot) return;
-		if (!CONFIG.CHANNELS.MEMES || message.channelId !== CONFIG.CHANNELS.MEMES)
+		if (
+			!CONFIG.CHANNELS.MEMES ||
+			message.channelId !== CONFIG.CHANNELS.MEMES ||
+			!CONFIG.MEMES_REACTIONS.length
+		)
 			return;
-		if (CONFIG.MEMES_REACTIONS.length === 0) return;
 
 		await Promise.all(
 			CONFIG.MEMES_REACTIONS.map((emoji) =>
