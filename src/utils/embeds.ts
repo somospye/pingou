@@ -1,4 +1,4 @@
-import type { GenerateContentResponseUsageMetadata } from "@google/genai";
+import type { CompletionUsage } from "openai/resources";
 import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
 import { CONFIG } from "@/config";
 import type { CreateRepLogI } from "@/services/reputationService";
@@ -46,13 +46,10 @@ export const Embeds = {
 			});
 	},
 
-	aiReplyEmbeds(
-		reply: string,
-		usage?: GenerateContentResponseUsageMetadata,
-	): Embed[] {
+	aiReplyEmbeds(reply: string, usage?: CompletionUsage): Embed[] {
 		const chunks = this.chunkText(reply, 4000);
-		const input = usage?.promptTokenCount ?? 0;
-		const output = (usage?.totalTokenCount ?? 0) - input;
+		const input = usage?.prompt_tokens ?? 0;
+		const output = (usage?.total_tokens ?? 0) - input;
 
 		const footerText = usage
 			? `Respuesta IA | I: ${input} | O: ${output}`
