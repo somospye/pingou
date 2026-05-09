@@ -65,45 +65,47 @@ export default class RepButtons extends ComponentCommand {
 
 		await ctx.deferUpdate();
 
+		const pending = await pendingRepRepository.findById(pendingId);
+		if (!pending) {
+			return ctx.editResponse({
+				content: "Este punto de rep ya fue procesado.",
+				embeds: [],
+				components: [],
+			});
+		}
+
+		await pendingRepRepository.deleteById(pendingId);
+
+		const { points, addedRoles } = await reputationService.addRepAndCheckRoles(
+			ctx.client,
+			{
+				guildId,
+				receiverId: pending.receiverId,
+				giverId: ctx.author.id,
+			},
+		);
+
+		let receiverName = pending.receiverId;
 		try {
-			const pending = await pendingRepRepository.findById(pendingId);
-			if (!pending) {
-				return ctx.editResponse({
-					content: "Este punto de rep ya fue procesado.",
-					embeds: [],
-					components: [],
-				});
-			}
+			const member = await ctx.client.members.fetch(
+				guildId,
+				pending.receiverId,
+			);
+			receiverName = member.username ?? pending.receiverId;
+		} catch {}
 
-			await pendingRepRepository.deleteById(pendingId);
+		if (addedRoles.length) {
+			const roleNames = await Promise.all(
+				addedRoles.map((roleId) =>
+					ctx.client.roles
+						.fetch(guildId, roleId)
+						.then((r) => r?.name ?? roleId)
+						.catch(() => roleId),
+				),
+			);
 
-			const { points, addedRoles } =
-				await reputationService.addRepAndCheckRoles(ctx.client, {
-					guildId,
-					receiverId: pending.receiverId,
-					giverId: ctx.author.id,
-				});
-
-			let receiverName = pending.receiverId;
-			try {
-				const member = await ctx.client.members.fetch(
-					guildId,
-					pending.receiverId,
-				);
-				receiverName = member.username ?? pending.receiverId;
-			} catch {}
-
-			if (addedRoles.length) {
-				const roleNames = await Promise.all(
-					addedRoles.map((roleId) =>
-						ctx.client.roles
-							.fetch(guildId, roleId)
-							.then((r) => r?.name ?? roleId)
-							.catch(() => roleId),
-					),
-				);
-
-				await ctx.client.messages.write(pending.originalChannelId, {
+			await ctx.client.messages
+				.write(pending.originalChannelId, {
 					embeds: [
 						Embeds.repRoleUpEmbed({
 							userId: pending.receiverId,
@@ -111,72 +113,59 @@ export default class RepButtons extends ComponentCommand {
 							points,
 						}),
 					],
-				});
-			}
-
-			await reputationService
-				.sendLogRep(ctx.client, {
-					giverId: ctx.author.id,
-					giverName: ctx.author.username,
-					newRoles: addedRoles,
-					points,
-					receiverId: pending.receiverId,
-					receiverName,
-				})
-				.catch(console.error);
-
-			const remaining = await pendingRepRepository.findByMessageId(notifMsgId);
-			const embeds = ctx.interaction.message.embeds;
-
-			const existingEmbed = (hasEmbed(embeds) ? embeds[0] : {}) as RawEmbed;
-			const fields = (existingEmbed.fields ?? []).map((f) => {
-				if (f.name !== "POSIBLES AYUDANTES") return f;
-				const lines = f.value.split("\n");
-				const btnIdx = Number(index);
-				if (lines[btnIdx] !== undefined) {
-					lines[btnIdx] =
-						`~~${lines[btnIdx]}~~ ✅ Rep dado por <@${ctx.author.id}>`;
-				}
-				return { ...f, value: lines.join("\n") };
-			});
-			const updatedEmbed = { ...existingEmbed, fields };
-
-			const remainingButtons = remaining
-				.sort((a, b) => a.id.localeCompare(b.id))
-				.map((r) => {
-					const idx = r.id.replace(`${notifMsgId}-`, "");
-					return new Button()
-						.setCustomId(`rep-approve-${idx}`)
-						.setLabel(`${Number(idx) + 1}`)
-						.setStyle(ButtonStyle.Primary);
-				});
-
-			const row = new ActionRow<Button>().setComponents([
-				...remainingButtons,
-				new Button()
-					.setCustomId("rep-reject-all")
-					.setLabel("Eliminar")
-					.setStyle(ButtonStyle.Secondary),
-			]);
-
-			await ctx.editResponse({
-				embeds: [updatedEmbed],
-				components: [row],
-			});
-		} catch (error) {
-			console.error("Error in handleApprove:", error);
-			await ctx
-				.editResponse({
-					embeds: [
-						Embeds.errorEmbed(
-							"Error",
-							"Ocurrió un error al procesar la reputación.",
-						),
-					],
-					components: [],
 				})
 				.catch(console.error);
 		}
+
+		await reputationService
+			.sendLogRep(ctx.client, {
+				giverId: ctx.author.id,
+				giverName: ctx.author.username,
+				newRoles: addedRoles,
+				points,
+				receiverId: pending.receiverId,
+				receiverName,
+			})
+			.catch(console.error);
+
+		const remaining = await pendingRepRepository.findByMessageId(notifMsgId);
+		const embeds = ctx.interaction.message.embeds;
+
+		const existingEmbed = (hasEmbed(embeds) ? embeds[0] : {}) as RawEmbed;
+		const fields = (existingEmbed.fields ?? []).map((f) => {
+			if (f.name !== "POSIBLES AYUDANTES") return f;
+			const lines = f.value.split("\n");
+			const btnIdx = Number(index);
+			if (lines[btnIdx] !== undefined) {
+				lines[btnIdx] =
+					`~~${lines[btnIdx]}~~ ✅ Rep dado por <@${ctx.author.id}>`;
+			}
+			return { ...f, value: lines.join("\n") };
+		});
+		const updatedEmbed = { ...existingEmbed, fields };
+
+		const remainingButtons = remaining
+			.sort((a, b) => a.id.localeCompare(b.id))
+			.map((r) => {
+				const idx = r.id.replace(`${notifMsgId}-`, "");
+				return new Button()
+					.setCustomId(`rep-approve-${idx}`)
+					.setLabel(`${Number(idx) + 1}`)
+					.setStyle(ButtonStyle.Primary);
+			});
+
+		const row = new ActionRow<Button>().setComponents([
+			...remainingButtons,
+			new Button()
+				.setCustomId("rep-reject-all")
+				.setLabel("Eliminar")
+				.setStyle(ButtonStyle.Secondary),
+		]);
+
+		await ctx.editResponse({
+			embeds: [updatedEmbed],
+			components: [row],
+		});
 	}
 
 	private async handleReject(ctx: ComponentContext<typeof this.componentType>) {
@@ -184,20 +173,9 @@ export default class RepButtons extends ComponentCommand {
 
 		await ctx.deferUpdate();
 
-		try {
-			await pendingRepRepository.deleteByMessageId(notifMsgId);
-		} catch (error) {
-			console.error("Error deleting pending reps:", error);
-		}
-
-		try {
-			await ctx.interaction.message.delete();
-		} catch {
-			await ctx.editResponse({
-				content: "*(eliminado)*",
-				embeds: [],
-				components: [],
-			});
-		}
+		await pendingRepRepository
+			.deleteByMessageId(notifMsgId)
+			.catch(console.error);
+		await ctx.interaction.message.delete().catch(console.error);
 	}
 }
