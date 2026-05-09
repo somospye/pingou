@@ -1,10 +1,13 @@
 import { createEvent } from "seyfert";
+import { CONFIG } from "@/config";
 import { memeReactionsRepository } from "@/repositories/memeReactionsRepository";
 
 export default createEvent({
 	data: { once: false, name: "messageCreate" },
 	async run(message, client) {
 		if (message.author.bot) return;
+		if (CONFIG.CHANNELS.MEMES && message.channelId !== CONFIG.CHANNELS.MEMES)
+			return;
 
 		const guildId = message.guildId;
 		if (!guildId) return;

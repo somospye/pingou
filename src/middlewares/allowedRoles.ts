@@ -5,6 +5,8 @@ import { Embeds } from "@/utils/embeds";
 
 export const AuthMiddleware = createMiddleware<void>(
 	async ({ context, next, stop }) => {
+		if (process.env["DEV_GUILD_ID"]) return next();
+
 		const requiredRoles = context.command.props.requiredRoles;
 
 		if (!requiredRoles || requiredRoles.includes(CONFIG.ROLES.EVERYONE))
