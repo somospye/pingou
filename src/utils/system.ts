@@ -1,4 +1,5 @@
-import si from "systeminformation";
+import fs from "node:fs/promises";
+import os from "node:os";
 
 export interface SystemStats {
 	cpu: {
@@ -33,43 +34,77 @@ export interface SystemStats {
 }
 
 export async function getSystemStats(): Promise<SystemStats> {
-	const [cpu, mem, osInfo, disks] = await Promise.all([
-		si.cpu(),
-		si.mem(),
-		si.osInfo(),
-		si.fsSize(),
-	]);
+	const cpus = os.cpus();
+	const totalMem = os.totalmem();
+	const freeMem = os.freemem();
+	const usedMem = totalMem - freeMem;
+
+	let totalLoad = 0;
+	let manufacturer = "Unknown";
+	let brand = "Unknown";
+	let speed = 0;
+
+	if (cpus.length > 0) {
+		const cpu = cpus[0];
+		if (cpu) {
+			brand = cpu.model;
+			manufacturer = brand.split(" ")[0] || "Unknown";
+			speed = cpu.speed / 1000;
+		}
+
+		let totalIdle = 0;
+		let totalTick = 0;
+		for (const core of cpus) {
+			if (!core) continue;
+			for (const type in core.times) {
+				totalTick += core.times[type as keyof typeof core.times];
+			}
+			totalIdle += core.times.idle;
+		}
+		totalLoad = totalTick > 0 ? ((totalTick - totalIdle) / totalTick) * 100 : 0;
+	}
+
+	const disks: SystemStats["disk"] = [];
+	try {
+		const stat = await fs.statfs("/");
+		const size = stat.blocks * stat.bsize;
+		const available = stat.bavail * stat.bsize;
+		const used = size - available;
+		disks.push({
+			fs: "/",
+			type: "local",
+			size,
+			used,
+			available,
+			use: size > 0 ? (used / size) * 100 : 0,
+			mount: "/",
+		});
+	} catch {
+		console.error("Failed to get disk stats");
+	}
 
 	return {
 		cpu: {
-			manufacturer: cpu.manufacturer,
-			brand: cpu.brand,
-			cores: cpu.cores,
-			physicalCores: cpu.physicalCores,
-			speed: cpu.speed,
-			load: cpu.speed === 0 ? 0 : (await si.currentLoad()).currentLoad,
+			manufacturer,
+			brand,
+			cores: cpus.length,
+			physicalCores: cpus.length,
+			speed,
+			load: totalLoad,
 		},
 		mem: {
-			total: mem.total,
-			used: mem.used,
-			free: mem.free,
-			usedPercent: (mem.used / mem.total) * 100,
+			total: totalMem,
+			used: usedMem,
+			free: freeMem,
+			usedPercent: (usedMem / totalMem) * 100,
 		},
 		os: {
-			platform: osInfo.platform,
-			distro: osInfo.distro,
-			release: osInfo.release,
-			uptime: (await si.time()).uptime,
+			platform: os.platform(),
+			distro: os.type(),
+			release: os.release(),
+			uptime: os.uptime(),
 		},
-		disk: disks.map((d) => ({
-			fs: d.fs,
-			type: d.type,
-			size: d.size,
-			used: d.used,
-			available: d.available,
-			use: d.use,
-			mount: d.mount,
-		})),
+		disk: disks,
 	};
 }
 

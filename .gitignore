@@ -160,3 +160,6 @@ devenv.local.yaml
 # Seyfert
 commands.json
 
+# package manager locks
+pnpm-lock.yaml
+package-lock.json
