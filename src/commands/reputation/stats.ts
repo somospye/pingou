@@ -25,6 +25,14 @@ const options = {
 export default class StatsCommand extends Command {
 	override async run(ctx: CommandContext<typeof options>) {
 		const target = ctx.options.usuario ?? ctx.author;
+
+		if (ctx.options.usuario?.bot) {
+			return ctx.write({
+				embeds: [Embeds.errorEmbed("Error", "Los bots no tienen reputación.")],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		const points = await reputationRepository.getReputation(target.id);
 
 		const sortedTiers = [...CONFIG.REP_TIERS].sort(
