@@ -51,6 +51,18 @@ export default class WarnCommand extends Command {
 
 		if (!guildId) return;
 
+		if (usuario.bot) {
+			return ctx.write({
+				embeds: [
+					Embeds.errorEmbed(
+						"Error",
+						"No podés realizar esta acción sobre un bot.",
+					),
+				],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		await ctx.deferReply(true);
 
 		if (!(await validateModerationLimit(ctx, "warn"))) return;

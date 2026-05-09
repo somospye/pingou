@@ -31,11 +31,10 @@
 		"prepare": "lefthook install"
 	},
 	"dependencies": {
-		"@google/genai": "^1.50.0",
 		"drizzle-orm": "^0.45.2",
+		"openai": "^6.37.0",
 		"pg": "^8.20.0",
 		"seyfert": "^4.3.0",
-		"systeminformation": "^5.31.5",
 		"zod": "^4.3.6"
 	},
 	"private": true,

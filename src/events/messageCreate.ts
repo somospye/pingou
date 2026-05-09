@@ -75,25 +75,35 @@ export default createEvent({
 				});
 			}
 
-			let contextLimit = 2;
-			const content = message.content ?? "";
-			const match = /contexto:\s*(\d+)/i.exec(content);
-			if (match?.[1]) {
-				contextLimit = Math.min(Number.parseInt(match[1], 10), 10);
+			const cleanContent = (message.content ?? "")
+				.replaceAll(new RegExp(`<@!?${client.me.id}>`, "g"), "")
+				.trim();
+
+			let promptMessages: string[] = [];
+
+			if (cleanContent.length > 0) {
+				promptMessages = [`${message.author.username}: ${cleanContent}`];
+			} else {
+				let contextLimit = 2;
+				const content = message.content ?? "";
+				const match = /contexto:\s*(\d+)/i.exec(content);
+				if (match?.[1]) {
+					contextLimit = Math.min(Number.parseInt(match[1], 10), 10);
+				}
+
+				const prevMessages = await aiService.getLatestMessages(
+					client,
+					message.channelId,
+					contextLimit + 1,
+					message.author.id,
+				);
+
+				if (!prevMessages) return;
+
+				promptMessages = [...prevMessages]
+					.reverse()
+					.map((m) => `${m.author.username}: ${m.content ?? ""}`);
 			}
-
-			const prevMessages = await aiService.getLatestMessages(
-				client,
-				message.channelId,
-				contextLimit + 1,
-				message.author.id,
-			);
-
-			if (!prevMessages) return;
-
-			const promptMessages = [...prevMessages]
-				.reverse()
-				.map((m) => `${m.author.username}: ${m.content ?? ""}`);
 
 			try {
 				const { text, usage } = await aiService.chat(promptMessages);
