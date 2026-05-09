@@ -36,6 +36,7 @@ export const CONFIG = {
 		CHAT_PROGRAMADORES: "1400004970115235933",
 		MEMES: "",
 	},
+	MEMES_REACTIONS: [] as string[],
 	CATEGORIES: {
 		FORUMS: "1400004970115235938",
 	},
@@ -72,7 +73,6 @@ const Envscheme = z.object({
 	BOT_TOKEN: z.string(),
 	PUBLIC_KEY: z.optional(z.string()),
 	PORT: z.coerce.number().default(4444),
-	DEV_GUILD_ID: z.optional(z.string()),
 });
 type Env = z.infer<typeof Envscheme>;
 

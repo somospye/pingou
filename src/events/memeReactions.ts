@@ -1,25 +1,16 @@
 import { createEvent } from "seyfert";
 import { CONFIG } from "@/config";
-import { memeReactionsRepository } from "@/repositories/memeReactionsRepository";
 
 export default createEvent({
 	data: { once: false, name: "messageCreate" },
 	async run(message, client) {
 		if (message.author.bot) return;
-		if (CONFIG.CHANNELS.MEMES && message.channelId !== CONFIG.CHANNELS.MEMES)
+		if (!CONFIG.CHANNELS.MEMES || message.channelId !== CONFIG.CHANNELS.MEMES)
 			return;
-
-		const guildId = message.guildId;
-		if (!guildId) return;
-
-		const emojis = await memeReactionsRepository.getEmojisForChannel(
-			guildId,
-			message.channelId,
-		);
-		if (emojis.length === 0) return;
+		if (CONFIG.MEMES_REACTIONS.length === 0) return;
 
 		await Promise.all(
-			emojis.map((emoji) =>
+			CONFIG.MEMES_REACTIONS.map((emoji) =>
 				client.reactions
 					.add(message.id, message.channelId, emoji)
 					.catch(() => {}),

@@ -26,20 +26,18 @@ export default class RepButtons extends ComponentCommand {
 	}
 
 	override async run(ctx: ComponentContext<typeof this.componentType>) {
-		if (!process.env["DEV_GUILD_ID"]) {
-			const userRoles = ctx.member?.roles.keys ?? [];
-			const canReview = [
-				CONFIG.ROLES.ADMIN,
-				CONFIG.ROLES.MODERATOR,
-				CONFIG.ROLES.HELPER,
-			].some((role) => role && userRoles.includes(role));
+		const userRoles = ctx.member?.roles.keys ?? [];
+		const canReview = [
+			CONFIG.ROLES.ADMIN,
+			CONFIG.ROLES.MODERATOR,
+			CONFIG.ROLES.HELPER,
+		].some((role) => role && userRoles.includes(role));
 
-			if (!canReview) {
-				return ctx.write({
-					embeds: [Embeds.noPermissionsEmbed()],
-					flags: MessageFlags.Ephemeral,
-				});
-			}
+		if (!canReview) {
+			return ctx.write({
+				embeds: [Embeds.noPermissionsEmbed()],
+				flags: MessageFlags.Ephemeral,
+			});
 		}
 
 		if (ctx.customId.startsWith("rep-approve-")) {

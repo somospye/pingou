@@ -1,6 +1,5 @@
 import { Client, type ParseClient, type ParseMiddlewares } from "seyfert";
 import type { CONFIG } from "./config";
-import { env } from "./config";
 import { middlewares } from "./middlewares";
 import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";
@@ -22,7 +21,6 @@ async function boostrap() {
 	await client.start();
 	await client.uploadCommands({
 		cachePath: "./commands.json",
-		...(env.DEV_GUILD_ID ? { guildId: env.DEV_GUILD_ID } : {}),
 	});
 
 	setInterval(
