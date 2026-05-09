@@ -54,9 +54,14 @@ export default class RepButtons extends ComponentCommand {
 		const notifMsgId = ctx.interaction.message.id;
 		const index = ctx.customId.replace("rep-approve-", "");
 		const pendingId = `${notifMsgId}-${index}`;
-
 		const guildId = ctx.guildId;
-		if (!guildId) return;
+
+		if (!guildId) {
+			return ctx.write({
+				embeds: [Embeds.errorEmbed("Error", "No se pudo obtener el servidor.")],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 
 		await ctx.deferUpdate();
 
@@ -74,7 +79,7 @@ export default class RepButtons extends ComponentCommand {
 		const { points, addedRoles } = await reputationService.addRepAndCheckRoles(
 			ctx.client,
 			{
-				guildId: ctx.guildId,
+				guildId,
 				receiverId: pending.receiverId,
 				giverId: ctx.author.id,
 			},
@@ -83,13 +88,11 @@ export default class RepButtons extends ComponentCommand {
 		let receiverName = pending.receiverId;
 		try {
 			const member = await ctx.client.members.fetch(
-				ctx.guildId,
+				guildId,
 				pending.receiverId,
 			);
 			receiverName = member.username ?? pending.receiverId;
 		} catch {}
-
-		// Felicitación pública si subió de rango
 
 		if (addedRoles.length) {
 			const roleNames = await Promise.all(
@@ -101,15 +104,17 @@ export default class RepButtons extends ComponentCommand {
 				),
 			);
 
-			await ctx.client.messages.write(pending.originalChannelId, {
-				embeds: [
-					Embeds.repRoleUpEmbed({
-						userId: pending.receiverId,
-						roleNames,
-						points,
-					}),
-				],
-			});
+			await ctx.client.messages
+				.write(pending.originalChannelId, {
+					embeds: [
+						Embeds.repRoleUpEmbed({
+							userId: pending.receiverId,
+							roleNames,
+							points,
+						}),
+					],
+				})
+				.catch(console.error);
 		}
 
 		await reputationService
@@ -126,7 +131,6 @@ export default class RepButtons extends ComponentCommand {
 		const remaining = await pendingRepRepository.findByMessageId(notifMsgId);
 		const embeds = ctx.interaction.message.embeds;
 
-		// Marcar en el embed al ayudante que recibió rep
 		const existingEmbed = (hasEmbed(embeds) ? embeds[0] : {}) as RawEmbed;
 		const fields = (existingEmbed.fields ?? []).map((f) => {
 			if (f.name !== "POSIBLES AYUDANTES") return f;
@@ -140,7 +144,6 @@ export default class RepButtons extends ComponentCommand {
 		});
 		const updatedEmbed = { ...existingEmbed, fields };
 
-		// Reconstruir botones: solo los que quedan pendientes + Eliminar siempre
 		const remainingButtons = remaining
 			.sort((a, b) => a.id.localeCompare(b.id))
 			.map((r) => {
@@ -170,16 +173,9 @@ export default class RepButtons extends ComponentCommand {
 
 		await ctx.deferUpdate();
 
-		await pendingRepRepository.deleteByMessageId(notifMsgId);
-
-		try {
-			await ctx.interaction.message.delete();
-		} catch {
-			await ctx.editResponse({
-				content: "*(eliminado)*",
-				embeds: [],
-				components: [],
-			});
-		}
+		await pendingRepRepository
+			.deleteByMessageId(notifMsgId)
+			.catch(console.error);
+		await ctx.interaction.message.delete().catch(console.error);
 	}
 }
