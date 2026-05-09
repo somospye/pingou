@@ -64,6 +64,18 @@ export default class MuteCommand extends Command {
 		const guildId = ctx.guildId;
 		if (!guildId) return;
 
+		if (usuario.bot) {
+			return ctx.write({
+				embeds: [
+					Embeds.errorEmbed(
+						"Error",
+						"No podés realizar esta acción sobre un bot.",
+					),
+				],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		const durationSeconds = parseDurationToSeconds(duracion);
 		if (durationSeconds === null) {
 			return ctx.editOrReply({

@@ -33,6 +33,15 @@ export default class InvitesCommand extends Command {
 		const guildId = ctx.guildId;
 		if (!guildId) return;
 
+		if (usuario.bot) {
+			return ctx.write({
+				embeds: [
+					Embeds.errorEmbed("Error", "Los bots no tienen invitaciones."),
+				],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		await ctx.deferReply(true);
 
 		const [dbInvites, joins] = await Promise.all([

@@ -35,6 +35,15 @@ export default class CasesCommand extends Command {
 		const guildId = ctx.guildId;
 		if (!guildId) return;
 
+		if (usuario.bot) {
+			return ctx.write({
+				embeds: [
+					Embeds.errorEmbed("Error", "Los bots no tienen historial de casos."),
+				],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		await ctx.deferReply(true);
 
 		const allCases = await moderationService.getUserCases(usuario.id, guildId);
