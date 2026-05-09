@@ -54,115 +54,129 @@ export default class RepButtons extends ComponentCommand {
 		const notifMsgId = ctx.interaction.message.id;
 		const index = ctx.customId.replace("rep-approve-", "");
 		const pendingId = `${notifMsgId}-${index}`;
-
 		const guildId = ctx.guildId;
-		if (!guildId) return;
+
+		if (!guildId) {
+			return ctx.write({
+				embeds: [Embeds.errorEmbed("Error", "No se pudo obtener el servidor.")],
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 
 		await ctx.deferUpdate();
 
-		const pending = await pendingRepRepository.findById(pendingId);
-		if (!pending) {
-			return ctx.editResponse({
-				content: "Este punto de rep ya fue procesado.",
-				embeds: [],
-				components: [],
-			});
-		}
-
-		await pendingRepRepository.deleteById(pendingId);
-
-		const { points, addedRoles } = await reputationService.addRepAndCheckRoles(
-			ctx.client,
-			{
-				guildId: ctx.guildId,
-				receiverId: pending.receiverId,
-				giverId: ctx.author.id,
-			},
-		);
-
-		let receiverName = pending.receiverId;
 		try {
-			const member = await ctx.client.members.fetch(
-				ctx.guildId,
-				pending.receiverId,
-			);
-			receiverName = member.username ?? pending.receiverId;
-		} catch {}
-
-		// Felicitación pública si subió de rango
-
-		if (addedRoles.length) {
-			const roleNames = await Promise.all(
-				addedRoles.map((roleId) =>
-					ctx.client.roles
-						.fetch(guildId, roleId)
-						.then((r) => r?.name ?? roleId)
-						.catch(() => roleId),
-				),
-			);
-
-			await ctx.client.messages.write(pending.originalChannelId, {
-				embeds: [
-					Embeds.repRoleUpEmbed({
-						userId: pending.receiverId,
-						roleNames,
-						points,
-					}),
-				],
-			});
-		}
-
-		await reputationService
-			.sendLogRep(ctx.client, {
-				giverId: ctx.author.id,
-				giverName: ctx.author.username,
-				newRoles: addedRoles,
-				points,
-				receiverId: pending.receiverId,
-				receiverName,
-			})
-			.catch(console.error);
-
-		const remaining = await pendingRepRepository.findByMessageId(notifMsgId);
-		const embeds = ctx.interaction.message.embeds;
-
-		// Marcar en el embed al ayudante que recibió rep
-		const existingEmbed = (hasEmbed(embeds) ? embeds[0] : {}) as RawEmbed;
-		const fields = (existingEmbed.fields ?? []).map((f) => {
-			if (f.name !== "POSIBLES AYUDANTES") return f;
-			const lines = f.value.split("\n");
-			const btnIdx = Number(index);
-			if (lines[btnIdx] !== undefined) {
-				lines[btnIdx] =
-					`~~${lines[btnIdx]}~~ ✅ Rep dado por <@${ctx.author.id}>`;
+			const pending = await pendingRepRepository.findById(pendingId);
+			if (!pending) {
+				return ctx.editResponse({
+					content: "Este punto de rep ya fue procesado.",
+					embeds: [],
+					components: [],
+				});
 			}
-			return { ...f, value: lines.join("\n") };
-		});
-		const updatedEmbed = { ...existingEmbed, fields };
 
-		// Reconstruir botones: solo los que quedan pendientes + Eliminar siempre
-		const remainingButtons = remaining
-			.sort((a, b) => a.id.localeCompare(b.id))
-			.map((r) => {
-				const idx = r.id.replace(`${notifMsgId}-`, "");
-				return new Button()
-					.setCustomId(`rep-approve-${idx}`)
-					.setLabel(`${Number(idx) + 1}`)
-					.setStyle(ButtonStyle.Primary);
+			await pendingRepRepository.deleteById(pendingId);
+
+			const { points, addedRoles } =
+				await reputationService.addRepAndCheckRoles(ctx.client, {
+					guildId,
+					receiverId: pending.receiverId,
+					giverId: ctx.author.id,
+				});
+
+			let receiverName = pending.receiverId;
+			try {
+				const member = await ctx.client.members.fetch(
+					guildId,
+					pending.receiverId,
+				);
+				receiverName = member.username ?? pending.receiverId;
+			} catch {}
+
+			if (addedRoles.length) {
+				const roleNames = await Promise.all(
+					addedRoles.map((roleId) =>
+						ctx.client.roles
+							.fetch(guildId, roleId)
+							.then((r) => r?.name ?? roleId)
+							.catch(() => roleId),
+					),
+				);
+
+				await ctx.client.messages.write(pending.originalChannelId, {
+					embeds: [
+						Embeds.repRoleUpEmbed({
+							userId: pending.receiverId,
+							roleNames,
+							points,
+						}),
+					],
+				});
+			}
+
+			await reputationService
+				.sendLogRep(ctx.client, {
+					giverId: ctx.author.id,
+					giverName: ctx.author.username,
+					newRoles: addedRoles,
+					points,
+					receiverId: pending.receiverId,
+					receiverName,
+				})
+				.catch(console.error);
+
+			const remaining = await pendingRepRepository.findByMessageId(notifMsgId);
+			const embeds = ctx.interaction.message.embeds;
+
+			const existingEmbed = (hasEmbed(embeds) ? embeds[0] : {}) as RawEmbed;
+			const fields = (existingEmbed.fields ?? []).map((f) => {
+				if (f.name !== "POSIBLES AYUDANTES") return f;
+				const lines = f.value.split("\n");
+				const btnIdx = Number(index);
+				if (lines[btnIdx] !== undefined) {
+					lines[btnIdx] =
+						`~~${lines[btnIdx]}~~ ✅ Rep dado por <@${ctx.author.id}>`;
+				}
+				return { ...f, value: lines.join("\n") };
 			});
+			const updatedEmbed = { ...existingEmbed, fields };
 
-		const row = new ActionRow<Button>().setComponents([
-			...remainingButtons,
-			new Button()
-				.setCustomId("rep-reject-all")
-				.setLabel("Eliminar")
-				.setStyle(ButtonStyle.Secondary),
-		]);
+			const remainingButtons = remaining
+				.sort((a, b) => a.id.localeCompare(b.id))
+				.map((r) => {
+					const idx = r.id.replace(`${notifMsgId}-`, "");
+					return new Button()
+						.setCustomId(`rep-approve-${idx}`)
+						.setLabel(`${Number(idx) + 1}`)
+						.setStyle(ButtonStyle.Primary);
+				});
 
-		await ctx.editResponse({
-			embeds: [updatedEmbed],
-			components: [row],
-		});
+			const row = new ActionRow<Button>().setComponents([
+				...remainingButtons,
+				new Button()
+					.setCustomId("rep-reject-all")
+					.setLabel("Eliminar")
+					.setStyle(ButtonStyle.Secondary),
+			]);
+
+			await ctx.editResponse({
+				embeds: [updatedEmbed],
+				components: [row],
+			});
+		} catch (error) {
+			console.error("Error in handleApprove:", error);
+			await ctx
+				.editResponse({
+					embeds: [
+						Embeds.errorEmbed(
+							"Error",
+							"Ocurrió un error al procesar la reputación.",
+						),
+					],
+					components: [],
+				})
+				.catch(console.error);
+		}
 	}
 
 	private async handleReject(ctx: ComponentContext<typeof this.componentType>) {
@@ -170,7 +184,11 @@ export default class RepButtons extends ComponentCommand {
 
 		await ctx.deferUpdate();
 
-		await pendingRepRepository.deleteByMessageId(notifMsgId);
+		try {
+			await pendingRepRepository.deleteByMessageId(notifMsgId);
+		} catch (error) {
+			console.error("Error deleting pending reps:", error);
+		}
 
 		try {
 			await ctx.interaction.message.delete();
