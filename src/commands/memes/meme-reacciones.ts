@@ -105,7 +105,17 @@ export default class MemeReaccionesCommand extends Command {
 		channelId: string,
 		emoji: string,
 	) {
-		await memeReactionsRepository.add(guildId, channelId, emoji);
+		const result = await memeReactionsRepository.add(guildId, channelId, emoji);
+		if (result.length === 0) {
+			return ctx.editOrReply({
+				embeds: [
+					Embeds.errorEmbed(
+						"Ya existe",
+						`${emoji} ya es una reacción automática en <#${channelId}>.`,
+					),
+				],
+			});
+		}
 		return ctx.editOrReply({
 			embeds: [
 				Embeds.successEmbed(
@@ -122,7 +132,21 @@ export default class MemeReaccionesCommand extends Command {
 		channelId: string,
 		emoji: string,
 	) {
-		await memeReactionsRepository.remove(guildId, channelId, emoji);
+		const result = await memeReactionsRepository.remove(
+			guildId,
+			channelId,
+			emoji,
+		);
+		if (result.length === 0) {
+			return ctx.editOrReply({
+				embeds: [
+					Embeds.errorEmbed(
+						"No encontrado",
+						`${emoji} no estaba configurado en <#${channelId}>.`,
+					),
+				],
+			});
+		}
 		return ctx.editOrReply({
 			embeds: [
 				Embeds.successEmbed(

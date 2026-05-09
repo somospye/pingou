@@ -9,16 +9,18 @@ export default createEvent({
 		const guildId = message.guildId;
 		if (!guildId) return;
 
-		const reactions = await memeReactionsRepository.findByChannel(
+		const emojis = await memeReactionsRepository.getEmojisForChannel(
 			guildId,
 			message.channelId,
 		);
-		if (reactions.length === 0) return;
+		if (emojis.length === 0) return;
 
-		for (const row of reactions) {
-			await client.reactions
-				.add(message.id, message.channelId, row.emoji)
-				.catch(() => {});
-		}
+		await Promise.all(
+			emojis.map((emoji) =>
+				client.reactions
+					.add(message.id, message.channelId, emoji)
+					.catch(() => {}),
+			),
+		);
 	},
 });
