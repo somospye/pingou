@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const CONFIG = {
-	GUILD_ID: "",
+	GUILD_ID: "963550274855780442",
 	EMOJIS: {
 		PEPEDOWN: "768544166581633044",
 		STAR: "⭐",
@@ -31,10 +31,10 @@ export const CONFIG = {
 		MOD_LOG: "1400004970115235932",
 		JOIN_LOG: "1400004970115235933",
 		BUMP: "",
-		REP_NOTIFICATION: "1498069342506713159",
-		REP_LOG: "1498048755721830593",
-		CHAT_PROGRAMADORES: "1400004970115235933",
-		MEMES: "",
+		REP_NOTIFICATION: "974671167325622322",
+		REP_LOG: "1035556647835283567",
+		CHAT_PROGRAMADORES: "963550274855780445",
+		MEMES: "963553325733802056",
 	},
 	CATEGORIES: {
 		FORUMS: "1400004970115235938",
@@ -72,6 +72,7 @@ const Envscheme = z.object({
 	BOT_TOKEN: z.string(),
 	PUBLIC_KEY: z.optional(z.string()),
 	PORT: z.coerce.number().default(4444),
+	DEV_GUILD_ID: z.optional(z.string()),
 });
 type Env = z.infer<typeof Envscheme>;
 
