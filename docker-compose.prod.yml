@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pingou-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-pingou}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    image: somospye/pingou:${TAG:-latest}
+    container_name: pingou-app
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-pingou}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - PUBLIC_KEY=${PUBLIC_KEY}
+      - AI_API_KEY=${AI_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
