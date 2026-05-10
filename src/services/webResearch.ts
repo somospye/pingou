@@ -1,3 +1,5 @@
+import { CONFIG } from "@/config";
+
 export interface ResearchResult {
 	/** Las fuentes con su markdown crudo, listas para synthesizeAnswer */
 	sources: { url: string; content: string }[];
@@ -94,30 +96,19 @@ class WebResearchService {
 	/**
 	 * Ranking heurístico de URLs por reputación de dominio + señales de
 	 * spam/junk. Reemplaza al LLM picker para ahorrar llamadas al modelo
-	 * (rate limit del provider). Los dominios y patrones son inferidos del
-	 * uso real de la comunidad de programación.
+	 * (rate limit del provider). Las reglas (regex + score) viven en
+	 * `CONFIG.AI.URL_RANKING` para poder ajustarlas sin tocar el código.
+	 *
+	 * Los scores son acumulativos: cada regex que matchea suma su score
+	 * al total para esa URL.
 	 */
 	private rankUrlsByReputation(urls: string[]): string[] {
 		const score = (url: string): number => {
 			const u = url.toLowerCase();
-			let s = 0;
-			// Docs oficiales — máxima prioridad
-			if (/\bdocs?\.(?:[\w-]+\.)+\w+\//.test(u)) s += 12;
-			if (/developer\.mozilla\.org|mdn\b/.test(u)) s += 10;
-			// Source canónicas
-			if (/github\.com\/[^/]+\/[^/]+/.test(u)) s += 8;
-			if (/stackoverflow\.com\/questions/.test(u)) s += 7;
-			if (/wikipedia\.org\/wiki/.test(u)) s += 6;
-			// Sitios oficiales (.io, .dev, .org, github.io de proyectos)
-			if (/github\.io/.test(u)) s += 5;
-			if (/\b(?:\w+\.)+(?:io|dev)\b/.test(u)) s += 3;
-			// Blogs técnicos conocidos
-			if (/dev\.to|medium\.com|hashnode\.com/.test(u)) s += 2;
-			// Penalizaciones
-			if (/pinterest|tiktok|facebook|instagram/.test(u)) s -= 8;
-			if (/[?&](utm_|fbclid|gclid|ref=)/.test(u)) s -= 2;
-			if (/\/(?:tag|tags|category|categories)\//.test(u)) s -= 3;
-			return s;
+			return CONFIG.AI.URL_RANKING.reduce(
+				(s, rule) => (rule.pattern.test(u) ? s + rule.score : s),
+				0,
+			);
 		};
 		return [...urls].sort((a, b) => score(b) - score(a));
 	}
