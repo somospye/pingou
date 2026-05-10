@@ -73,6 +73,12 @@ export const CONFIG = {
 			"ty",
 		],
 	},
+	AI: {
+		// Activa o desactiva la investigación web en respuestas de IA.
+		// Cuando está en false, el bot responde solo con el conocimiento del
+		// modelo (sin DDG/Jina), sin tocar el rate limit de research.
+		RESEARCH_ENABLED: true as boolean,
+	},
 };
 
 const Envscheme = z.object({
