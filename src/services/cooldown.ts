@@ -62,8 +62,14 @@ export class CooldownService {
 			return { ok: true };
 		}
 
+		// Si llegamos acá todos los slots están ocupados (findIndex devolvió -1),
+		// así que ningún elemento de slots es null. Filtramos por type-narrowing
+		// para no usar optional chaining engañoso en `.expiresAt.getTime()`.
+		const occupiedSlots = slots.filter(
+			(s): s is NonNullable<typeof s> => s !== null,
+		);
 		const earliestExpiry = Math.min(
-			...slots.map((s) => s?.expiresAt.getTime() ?? Number.POSITIVE_INFINITY),
+			...occupiedSlots.map((s) => s.expiresAt.getTime()),
 		);
 		const retryAfter = Math.ceil((earliestExpiry - Date.now()) / 1000);
 		return { ok: false, retryAfter: Math.max(retryAfter, 1) };
