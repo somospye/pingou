@@ -2,9 +2,8 @@ import { and, desc, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/database";
 import { repHistory } from "@/database/schemas/repHistory";
 import { users } from "@/database/schemas/users";
+import { getPeriodStart, type Period } from "@/utils/date";
 import { usersRepository } from "./usersRepository";
-
-export type Period = "weekly" | "monthly" | "all";
 
 export class ReputationRepository {
 	async addReputation(
@@ -33,34 +32,12 @@ export class ReputationRepository {
 		return await usersRepository.getRep(userId);
 	}
 
-	async getTopReputation(tipo: "rep" | "empleos", period: Period, limit = 10) {
-		const column = tipo === "rep" ? users.rep : users.repEmpleos;
-
-		const query = db
-			.select({
-				userId: users.userId,
-				points: column,
-			})
-			.from(users)
-			.orderBy(desc(column))
-			.limit(limit);
-
-		return await query;
-	}
-
 	async getTopNegativeRep(period: Period, limit = 10) {
-		const now = new Date();
-		let dateFilter: Date | null = null;
-
-		if (period === "weekly") {
-			dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-		} else if (period === "monthly") {
-			dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-		}
+		const dateFilter = getPeriodStart(period);
 
 		const conditions = [lt(repHistory.points, 0)];
 
-		if (dateFilter) {
+		if (dateFilter.getTime() > 0) {
 			conditions.push(gte(repHistory.createdAt, dateFilter));
 		}
 

@@ -1,10 +1,10 @@
 import type { UsingClient } from "seyfert";
 import { CONFIG } from "@/config";
 import { modActionRepository } from "@/repositories/modActionRepository";
+import { getPeriodStart, type Period } from "@/utils/date";
 import { Embeds } from "@/utils/embeds";
 
 export type ModActionType = "ban" | "kick" | "mute" | "warn" | "restrict";
-export type Period = "weekly" | "monthly" | "all";
 
 interface RoleLimits {
 	warn: number;
@@ -120,28 +120,13 @@ export class ModerationService {
 		await modActionRepository.cleanupExpiredLimits();
 	}
 
-	getPeriodStart(period: Period): Date {
-		const now = new Date();
-		if (period === "weekly") {
-			const d = new Date(now);
-			d.setUTCDate(d.getUTCDate() - 7);
-			return d;
-		}
-		if (period === "monthly") {
-			const d = new Date(now);
-			d.setUTCMonth(d.getUTCMonth() - 1);
-			return d;
-		}
-		return new Date(0);
-	}
-
 	async getStats(guildId: string, period: Period) {
-		const since = this.getPeriodStart(period);
+		const since = getPeriodStart(period);
 		return modActionRepository.getStatsByPeriod(guildId, since);
 	}
 
 	async getTopModerators(guildId: string, period: Period, limit = 10) {
-		const since = this.getPeriodStart(period);
+		const since = getPeriodStart(period);
 		return modActionRepository.getTopModerators(guildId, since, limit);
 	}
 }

@@ -8,7 +8,8 @@ import {
 } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
-import { moderationService, type Period } from "@/services/moderationService";
+import { moderationService } from "@/services/moderationService";
+import type { Period } from "@/utils/date";
 import { Embeds } from "@/utils/embeds";
 
 const PERIOD_LABELS: Record<Period, string> = {
@@ -60,7 +61,7 @@ export default class ModStatsCommand extends Command {
 		await ctx.deferReply(true);
 
 		const period = periodo as Period;
-		const periodLabel = PERIOD_LABELS[period];
+		const periodLabel = PERIOD_LABELS[period] || "Periodo desconocido";
 
 		if (vista === "stats") {
 			const stats = await moderationService.getStats(guildId, period);
