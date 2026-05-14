@@ -73,6 +73,37 @@ export const CONFIG = {
 			"ty",
 		],
 	},
+	AI: {
+		// Activa o desactiva la investigación web en respuestas de IA.
+		// Cuando está en false, el bot responde solo con el conocimiento del
+		// modelo (sin DDG/Jina), sin tocar el rate limit de research.
+		RESEARCH_ENABLED: true as boolean,
+
+		// Score por reputación de dominio para rankear URLs candidatas del
+		// SERP cuando hacemos research web. Las entradas se evalúan en orden:
+		// CADA regex que matchea suma su score al total (los puntos acumulan).
+		// Reordenar / editar este array cambia qué fuentes preferimos sin
+		// tocar código. Boost positivo para docs/oficiales/canónicas;
+		// penalización negativa para spam/clickbait/trackers.
+		URL_RANKING: [
+			// Boost — máxima prioridad: docs oficiales (regex de subdominio "docs")
+			{ pattern: /\bdocs?\.(?:[\w-]+\.)+\w+\//, score: 12 },
+			{ pattern: /developer\.mozilla\.org|mdn\b/, score: 10 },
+			// Source canónicas
+			{ pattern: /github\.com\/[^/]+\/[^/]+/, score: 8 },
+			{ pattern: /stackoverflow\.com\/questions/, score: 7 },
+			{ pattern: /wikipedia\.org\/wiki/, score: 6 },
+			// Sitios oficiales de proyectos (github.io, .io, .dev)
+			{ pattern: /github\.io/, score: 5 },
+			{ pattern: /\b(?:\w+\.)+(?:io|dev)\b/, score: 3 },
+			// Blogs técnicos conocidos
+			{ pattern: /dev\.to|medium\.com|hashnode\.com/, score: 2 },
+			// Penalizaciones
+			{ pattern: /pinterest|tiktok|facebook|instagram/, score: -8 },
+			{ pattern: /\/(?:tag|tags|category|categories)\//, score: -3 },
+			{ pattern: /[?&](?:utm_|fbclid|gclid|ref=)/, score: -2 },
+		] as ReadonlyArray<{ pattern: RegExp; score: number }>,
+	},
 };
 
 const Envscheme = z.object({
