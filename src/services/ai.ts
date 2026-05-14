@@ -59,6 +59,7 @@ export type Features = {
 export class AIService {
 	private _ai: OpenAI | null = null;
 	private readonly model: string = "qwen/qwen3-coder-480b-a35b-instruct";
+	private readonly light_model: string = "mistralai/mistral-nemotron";
 
 	// Instanciamos el cliente de forma lazy para que la falta de AI_API_KEY
 	// no rompa la carga del módulo y solo falle al intentar usar la IA.
@@ -201,7 +202,7 @@ export class AIService {
 
 		try {
 			const result = await this.ai.chat.completions.create({
-				model: this.model,
+				model: this.light_model,
 				max_tokens: 900,
 				temperature: 0.5,
 				response_format: { type: "json_object" },
@@ -209,34 +210,51 @@ export class AIService {
 					{
 						role: "system",
 						content: `${BOT_PROMPT}
+						Además, sos un planner de flujo:
 
-ADEMÁS, sos también el planificador del flujo agéntico de respuesta. Para CADA mensaje del usuario, decidís en una sola llamada:
+						Devuelve SIEMPRE JSON con:
+						{
+							"needsResearch": boolean,
+							"queries": string[],
+							"answer": string
+						}
 
-A) Si la pregunta NECESITA buscar en internet (needsResearch:true) → generás 2-3 queries en inglés.
-B) Si NO necesita búsqueda (needsResearch:false) → queries va vacío.
+						---
 
-En ambos casos, generás SIEMPRE un campo "answer" — la respuesta completa al usuario siguiendo las reglas de Pingou (versión simple primero, español amigable, etc.). En caso B la usás directamente. En caso A esta answer queda como fallback si la investigación falla o está bloqueada por rate limit; el flujo intentará primero hacer una respuesta mejor con fuentes web.
+						DECISIÓN:
 
-needsResearch=true si la pregunta menciona:
-- Nombres propios (proyecto, librería, framework, comando, paquete npm/pip)
-- Mensajes de error específicos (TypeError, ImportError, stack traces)
-- Versiones / APIs / sintaxis específica
-- Cualquier "qué es <nombre>" con nombre propio
-REGLA CRÍTICA: si la pregunta tiene un nombre propio NO asumas que sabes qué es. SIEMPRE investigá.
+						needsResearch = true si hay:
+						- errores técnicos (TypeError, stack trace, crash)
+						- librerías/frameworks/herramientas no triviales
+						- APIs o sintaxis específica
+						- "qué es X" donde X es un proyecto o nombre propio
 
-needsResearch=false SOLO si: saludos/charla, conceptos genéricos sin nombres propios ("qué es una variable", "qué es un bucle"), opiniones sin tema concreto.
+						needsResearch = false si:
+						- conceptos básicos (variable, bucle, función)
+						- saludos
+						- preguntas genéricas
 
-FORMATO de respuesta (JSON estricto):
-{
-  "needsResearch": boolean,
-  "queries": string[],     // queries en inglés si needsResearch=true, [] si no
-  "answer": string         // respuesta o fallback, en español, siguiendo BOT_PROMPT
-}
+						---
 
-Ejemplos:
-- "hola" → { "needsResearch": false, "queries": [], "answer": "¡Hola! Soy Pingou, ¿en qué te puedo ayudar con programación?" }
-- "qué es bun" → { "needsResearch": true, "queries": ["bun javascript runtime", "bun.sh what is"], "answer": "Bun es un runtime alternativo a Node, pero dejame buscar info actualizada para darte detalles..." }
-- "qué es una variable" → { "needsResearch": false, "queries": [], "answer": "Una variable es un espacio en memoria con un nombre, donde guardás un valor que puede cambiar. Ej: \`let x = 5\`. ¿Querés que profundice?" }`,
+						QUERIES:
+						- solo si needsResearch = true
+						- 2 a 3 en inglés
+
+						---
+
+						ANSWER:
+						- siempre obligatorio
+						- español
+						- 2 a 5 líneas, simple primero
+						- si needsResearch=true → respuesta general sin inventar detalles
+
+						---
+
+						NO texto adicional. Solo JSON válido.
+						Ejemplos:
+						- "hola" → { "needsResearch": false, "queries": [], "answer": "¡Hola! Soy Pingou, ¿en qué te puedo ayudar con programación?" }
+						- "qué es bun" → { "needsResearch": true, "queries": ["bun javascript runtime", "bun.sh what is"], "answer": "Bun es un runtime alternativo a Node, pero dejame buscar info actualizada para darte detalles..." }
+						- "qué es una variable" → { "needsResearch": false, "queries": [], "answer": "Una variable es un espacio en memoria con un nombre, donde guardás un valor que puede cambiar. Ej: \`let x = 5\`. ¿Querés que profundice?" }`,
 					},
 					{
 						role: "user",

@@ -139,7 +139,7 @@ export async function handleAiMention(
 	let usage: Awaited<ReturnType<typeof aiService.synthesizeAnswer>>["usage"];
 
 	if (shouldResearch) {
-		await onProgress?.("🤔 Planeando respuesta...");
+		await onProgress?.("🤔 Pensando...");
 		const plan = await aiService.planResponse(cleanContent);
 
 		if (plan.needsResearch && plan.queries.length) {
