@@ -13,6 +13,8 @@ export default createEvent({
 
 		setTimeout(() => processedThreads.delete(thread.id), 10000);
 
+		if (!(thread as { newlyCreated?: true }).newlyCreated) return;
+
 		const forum = await client.channels.fetch(thread.parentId);
 
 		if (!forum || !("parentId" in forum)) return;
