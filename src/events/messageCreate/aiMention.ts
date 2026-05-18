@@ -158,6 +158,7 @@ export async function handleAiMention(
 				);
 
 				if (webResult?.sources.length) {
+					await onProgress?.("🤔 Sintetizando respuesta...");
 					// MEGA-CALL #2: synthesize con fuentes crudas. Hace
 					// filtración + extracción + síntesis + citas en 1 call.
 					const synth = await aiService.synthesizeAnswer(

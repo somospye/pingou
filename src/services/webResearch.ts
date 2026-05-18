@@ -168,9 +168,7 @@ class WebResearchService {
 		);
 		if (!sources.length) return null;
 
-		await onProgress?.(
-			`✅ ${sources.length} fuente(s) obtenidas, sintetizando...`,
-		);
+		await onProgress?.(`✅ ${sources.length} fuente(s) obtenidas`);
 
 		const sourceUrls = sources.map((s) => s.url);
 		const contextForAI = [
