@@ -197,10 +197,14 @@ export const Embeds = {
 		forumName: string;
 	}): Embed {
 		return new Embed()
-			.setTitle(`📝 Nuevo hilo en el foro ${data.forumName}`)
-			.setDescription(`**${data.title}**\n<@${data.ownerId}> creó una consulta`)
+			.setAuthor({
+				name: `Nueva duda en ${data.forumName}`,
+			})
+			.setDescription(
+				`<@${data.ownerId}> publicó una duda:\n\n**${data.title}**`,
+			)
 			.setURL(`https://discord.com/channels/${data.guildId}/${data.threadId}`)
-			.setColor("Green")
+			.setColor("Blue")
 			.setTimestamp();
 	},
 
