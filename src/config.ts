@@ -1,5 +1,13 @@
 import z from "zod";
 
+export interface RoleLimits {
+	warn: number;
+	mute: number;
+	kick: number;
+	ban: number;
+	restrict: number;
+}
+
 export const CONFIG = {
 	GUILD_ID: "768278151435386900",
 	EMOJIS: {
@@ -49,6 +57,11 @@ export const CONFIG = {
 		"1249222442199814257",
 	],
 	REPUTATION_FOR_PRIORITY: 5,
+	ROLE_LIMITS: {
+		helper: { warn: -1, mute: 5, kick: 1, ban: 1, restrict: 1 },
+		mod: { warn: -1, mute: 10, kick: 5, ban: 2, restrict: 2 },
+		admin: { warn: -1, mute: -1, kick: -1, ban: -1, restrict: -1 },
+	},
 	REP_TIERS: [
 		{ minPoints: 1, roleId: "806755636288815115" }, // Iniciante
 		{ minPoints: 16, roleId: "805073774088945725" }, // Regular

@@ -6,20 +6,6 @@ import { Embeds } from "@/utils/embeds";
 
 export type ModActionType = "ban" | "kick" | "mute" | "warn" | "restrict";
 
-interface RoleLimits {
-	warn: number;
-	mute: number;
-	kick: number;
-	ban: number;
-	restrict: number;
-}
-
-const ROLE_LIMITS: Record<string, RoleLimits> = {
-	helper: { warn: -1, mute: 5, kick: 1, ban: 1, restrict: 1 },
-	mod: { warn: -1, mute: 10, kick: 5, ban: 2, restrict: 2 },
-	admin: { warn: -1, mute: -1, kick: -1, ban: -1, restrict: -1 },
-};
-
 export class ModerationService {
 	getTierWeight(roleIds: string[]): number {
 		if (roleIds.includes(CONFIG.ROLES.ADMIN)) return 3;
@@ -28,7 +14,7 @@ export class ModerationService {
 		return 0;
 	}
 
-	getModeratorTier(roleIds: string[]): string | null {
+	getModeratorTier(roleIds: string[]): "admin" | "mod" | "helper" | null {
 		if (roleIds.includes(CONFIG.ROLES.ADMIN)) return "admin";
 		if (roleIds.includes(CONFIG.ROLES.MODERATOR)) return "mod";
 		if (roleIds.includes(CONFIG.ROLES.HELPER)) return "helper";
@@ -44,7 +30,7 @@ export class ModerationService {
 
 		if (!tier) return { allowed: false };
 
-		const limits = ROLE_LIMITS[tier];
+		const limits = CONFIG.ROLE_LIMITS[tier];
 		if (!limits) return { allowed: false };
 
 		const limit = limits[actionType];
