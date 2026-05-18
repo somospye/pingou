@@ -58,7 +58,6 @@ export type Features = {
 
 export class AIService {
 	private _ai: OpenAI | null = null;
-	private readonly model: string = "qwen/qwen3-coder-480b-a35b-instruct";
 	private readonly light_model: string = "mistralai/mistral-nemotron";
 
 	// Instanciamos el cliente de forma lazy para que la falta de AI_API_KEY
@@ -198,10 +197,11 @@ export class AIService {
 		if (!process.env.AI_API_KEY) {
 			return fallback("La IA no está configurada por el momento.");
 		}
+
 		const truncated = query.slice(0, 600);
 
 		try {
-			const result = await this.ai.chat.completions.create({
+			const completion = await this.ai.chat.completions.create({
 				model: this.light_model,
 				max_tokens: 900,
 				temperature: 0.5,
@@ -262,7 +262,7 @@ export class AIService {
 					},
 				],
 			});
-			const raw = result.choices[0]?.message?.content ?? "";
+			const raw = completion.choices[0]?.message?.content ?? "";
 			const parsed = this.parseLooseJson<{
 				needsResearch?: boolean;
 				queries?: unknown;
@@ -282,7 +282,7 @@ export class AIService {
 						.slice(0, 3)
 				: [];
 
-			return {
+			const result = {
 				needsResearch: !!parsed.needsResearch && queries.length > 0,
 				queries,
 				answer:
@@ -290,6 +290,8 @@ export class AIService {
 						? parsed.answer.trim()
 						: "Ahora no puedo responder a esta pregunta.",
 			};
+
+			return result;
 		} catch (err) {
 			console.error("planResponse error:", err);
 			return fallback("Ocurrió un error al procesar tu pregunta.");
@@ -320,16 +322,15 @@ export class AIService {
 		const sourcesBlock = sources
 			.map(
 				(s, i) =>
-					`--- Fuente ${i + 1}: ${s.url} ---\n${s.content.slice(0, 8_000)}`,
+					`--- Fuente ${i + 1}: ${s.url} ---\n${s.content.slice(0, 3_000)}`,
 			)
 			.join("\n\n");
 
 		try {
 			const result = await this.ai.chat.completions.create({
-				model: this.model,
-				max_tokens: 800,
-				temperature: 0.68,
-				top_p: 0.77,
+				model: this.light_model,
+				max_tokens: 500,
+				temperature: 0.5,
 				messages: [
 					{
 						role: "system",
@@ -373,211 +374,6 @@ Las reglas anteriores de Pingou (versión simple primero, español amigable, seg
 		}
 	}
 
-	/**
-	 * @deprecated reemplazado por planResponse. Mantenido por si otros
-	 * call sites lo necesitan en el futuro; el mention IA ya no lo usa.
-	 */
-	async generateSearchQueries(query: string): Promise<string[]> {
-		if (!process.env.AI_API_KEY) return [query];
-		const truncated = query.slice(0, 400);
-		try {
-			const result = await this.ai.chat.completions.create({
-				model: this.model,
-				max_tokens: 120,
-				temperature: 0,
-				response_format: { type: "json_object" },
-				messages: [
-					{
-						role: "system",
-						content: `Decides si una pregunta de programación necesita búsqueda web y, si la necesita, generás 2-3 queries en inglés.
-
-Responde SIEMPRE con un objeto JSON con esta forma exacta:
-{ "needs_research": boolean, "queries": string[] }
-
-needs_research = false EXCLUSIVAMENTE en estos 3 casos (en ese caso queries = []):
-1. Saludos o charla: "hola", "buenos días", "cómo estás"
-2. Conceptos GENÉRICOS de la disciplina (sin nombres propios): "qué es una variable", "qué es un bucle"
-3. Pedidos de opinión personal sin tema concreto: "cuál es mejor lenguaje?"
-
-Para TODO lo demás needs_research = true con 2-3 queries en inglés.
-
-REGLA CRÍTICA ANTI-ALUCINACIÓN: si la pregunta contiene un nombre propio (proyecto, librería, herramienta, framework, comando, sigla, paquete npm/pip), NUNCA asumas que sabes qué es. SIEMPRE investiga.
-
-Ejemplos:
-- "qué es openclaw" → { "needs_research": true, "queries": ["openclaw github project", "openclaw what is", "openclaw captain claw remake"] }
-- "TypeError: Cannot read properties of undefined" → { "needs_research": true, "queries": ["TypeError Cannot read properties of undefined fix javascript", "javascript undefined property access error"] }
-- "hola" → { "needs_research": false, "queries": [] }
-- "qué es una variable" → { "needs_research": false, "queries": [] }`,
-					},
-					{
-						role: "user",
-						content: `Pregunta: "${truncated}"`,
-					},
-				],
-			});
-			const raw = result.choices[0]?.message?.content ?? "";
-			const parsed = this.parseLooseJson<{
-				needs_research?: boolean;
-				queries?: unknown;
-			}>(raw);
-
-			if (!parsed || parsed.needs_research === false) return [];
-			if (!Array.isArray(parsed.queries)) return [query];
-
-			const queries = parsed.queries
-				.filter(
-					(q): q is string => typeof q === "string" && q.trim().length > 3,
-				)
-				.map((q) => q.trim())
-				.slice(0, 3);
-			return queries.length ? queries : [query];
-		} catch {
-			return [query];
-		}
-	}
-
-	/**
-	 * Evalúa el contenido encontrado hasta ahora y decide si se necesitan
-	 * más búsquedas, identificando GAPS específicos en lugar de queries
-	 * arbitrarias. También recibe la lista de queries ya ejecutadas para
-	 * evitar pedir variantes equivalentes (patrón de STORM AskQuestion +
-	 * GPT Researcher context-aware refinement).
-	 *
-	 * Devuelve [] cuando done = true. Si pide más, hasta maxAdditional
-	 * queries enfocadas en los gaps que el modelo identificó.
-	 */
-	async evaluateSearchProgress(
-		query: string,
-		sources: { url: string; content: string }[],
-		maxAdditional: number,
-		previousQueries: string[] = [],
-	): Promise<string[]> {
-		if (!process.env.AI_API_KEY || maxAdditional <= 0) return [];
-
-		const contentSummary = sources
-			.map((s, i) => `[Fuente ${i + 1}: ${s.url}]\n${s.content.slice(0, 600)}`)
-			.join("\n\n---\n\n")
-			.slice(0, 3_000);
-
-		const previousQueriesBlock = previousQueries.length
-			? `\n\nQueries ya ejecutadas (NO repetir ni pedir variantes equivalentes):\n${previousQueries.map((q) => `- ${q}`).join("\n")}`
-			: "";
-
-		try {
-			const result = await this.ai.chat.completions.create({
-				model: this.model,
-				max_tokens: 200,
-				temperature: 0,
-				response_format: { type: "json_object" },
-				messages: [
-					{
-						role: "system",
-						content: `Sos un evaluador de progreso de investigación web. Recibís la pregunta original, el contenido recolectado y las queries ya ejecutadas. Tu tarea: identificar GAPS (huecos de información) y proponer queries que los llenen específicamente.
-
-Responde SIEMPRE con un objeto JSON con esta forma:
-{ "done": boolean, "gaps": string[], "queries": string[] }
-
-- done = true si el contenido es suficiente para responder bien la pregunta original. En ese caso gaps = [] y queries = [].
-- done = false si faltan piezas. gaps describe qué falta (1-3 ítems en español, cortos). queries son hasta ${maxAdditional} búsquedas en inglés que apuntan a esos gaps específicos.
-
-Reglas para queries nuevas:
-1. NO repetir queries ya ejecutadas ni variantes ortográficas equivalentes.
-2. Cada query debe apuntar a un gap concreto, no a la pregunta general.
-3. Si el contenido cubre bien todo y solo faltan detalles menores, preferí done = true.
-
-Ejemplo:
-{ "done": false, "gaps": ["versión actual del proyecto", "ejemplos de código"], "queries": ["openclaw current version release", "openclaw code example"] }`,
-					},
-					{
-						role: "user",
-						content: `Pregunta original: "${query.slice(0, 300)}"
-
-Contenido encontrado:
-${contentSummary}${previousQueriesBlock}
-
-¿Es suficiente? Si no, ¿qué gaps quedan y qué queries los llenan?`,
-					},
-				],
-			});
-			const raw = result.choices[0]?.message?.content ?? "";
-			const parsed = this.parseLooseJson<{
-				done?: boolean;
-				queries?: unknown;
-			}>(raw);
-
-			if (!parsed || parsed.done === true) return [];
-			if (!Array.isArray(parsed.queries)) return [];
-
-			const previousLower = new Set(
-				previousQueries.map((q) => q.trim().toLowerCase()),
-			);
-			const queries = parsed.queries
-				.filter(
-					(q): q is string => typeof q === "string" && q.trim().length > 3,
-				)
-				.map((q) => q.trim())
-				.filter((q) => !previousLower.has(q.toLowerCase()))
-				.slice(0, maxAdditional);
-			return queries;
-		} catch {
-			return [];
-		}
-	}
-
-	/**
-	 * Extractor estilo Perplexica scrapeURL.ts: dado el markdown crudo
-	 * scrapeado y la pregunta original, devuelve bullets en formato
-	 * telegram-style con los hechos relevantes. Preserva números y nombres
-	 * exactos, descarta marketing/nav/footer.
-	 *
-	 * Una sola call por fuente con el contenido completo (hasta ~8k chars).
-	 * No usamos chunking para mantener bajo el conteo de requests al
-	 * provider de IA (qwen3-coder en NVIDIA Integrate tiene rate limit).
-	 *
-	 * Falla silenciosamente devolviendo un slice como fallback — peor que
-	 * perfecto pero mejor que perder la fuente entera.
-	 */
-	async extractRelevantFacts(query: string, chunk: string): Promise<string> {
-		if (!process.env.AI_API_KEY) return chunk.slice(0, 800);
-		try {
-			const result = await this.ai.chat.completions.create({
-				model: this.model,
-				max_tokens: 400,
-				temperature: 0,
-				response_format: { type: "json_object" },
-				messages: [
-					{
-						role: "system",
-						content: `Extraés hechos relevantes a una pregunta desde un fragmento de markdown scrapeado de la web.
-
-Responde con JSON: { "facts": string }
-
-Reglas:
-- facts es texto con bullets ("- punto" por línea). Telegram-style, breve.
-- Preservá números, versiones, nombres propios EXACTOS de la fuente.
-- NO inventes. Si el fragmento no tiene nada relevante a la pregunta, devolvé { "facts": "" }.
-- Descartá navegación, headers, footers, banners de cookies, ads, "subscribe", "related posts".
-- Si hay código relevante, incluilo entre backticks.
-
-Ejemplo:
-Pregunta: "qué es bun"
-Fragmento: "...Bun is a fast all-in-one JavaScript runtime... Released in 2022 by Jarred Sumner... Built on JavaScriptCore..."
-{ "facts": "- Runtime all-in-one para JavaScript\\n- Released 2022 por Jarred Sumner\\n- Built on JavaScriptCore" }`,
-					},
-					{
-						role: "user",
-						content: `Pregunta: "${query.slice(0, 200)}"\n\nFragmento:\n${chunk}`,
-					},
-				],
-			});
-			const raw = result.choices[0]?.message?.content ?? "";
-			const parsed = this.parseLooseJson<{ facts?: string }>(raw);
-			return parsed?.facts ?? chunk.slice(0, 800);
-		} catch {
-			return chunk.slice(0, 800);
-		}
-	}
-
 	async chat(
 		messages: string[],
 		webContext?: string,
@@ -618,10 +414,9 @@ Usá el contexto de arriba para responder con mayor precisión. Reglas:
 				: [];
 
 			const result = await this.ai.chat.completions.create({
-				model: this.model,
-				max_tokens: 800,
-				temperature: 0.68,
-				top_p: 0.77,
+				model: this.light_model,
+				max_tokens: 500,
+				temperature: 0.55,
 				messages: [
 					{
 						role: "system",

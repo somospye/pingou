@@ -11,13 +11,13 @@ export interface ResearchResult {
 
 class WebResearchService {
 	private readonly JINA_BASE = "https://r.jina.ai/";
-	private readonly FETCH_TIMEOUT_MS = 8_000;
+	private readonly FETCH_TIMEOUT_MS = 5_000;
 	// Cap de fuentes finales que pasan al synthesize. El modelo recibe el
 	// markdown crudo y filtra noise en su única llamada.
-	private readonly MAX_SOURCES = 3;
+	private readonly MAX_SOURCES = 2;
 	// Cuánto markdown bruto traer por URL desde Jina Reader. El synthesize
 	// lo recibe entero — qwen3-coder-480b tiene context window amplísimo.
-	private readonly FETCH_MAX_CHARS = 8_000;
+	private readonly FETCH_MAX_CHARS = 5_000;
 
 	private async fetchWithTimeout(
 		url: string,
