@@ -197,9 +197,7 @@ export const Embeds = {
 		forumName: string;
 	}): Embed {
 		return new Embed()
-			.setAuthor({
-				name: `Nueva duda en ${data.forumName}`,
-			})
+			.setTitle(`Nueva duda en ${data.forumName}`)
 			.setDescription(
 				`<@${data.ownerId}> publicó una duda:\n\n**${data.title}**`,
 			)
