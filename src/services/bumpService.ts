@@ -11,7 +11,6 @@ import { schedulerService } from "./scheduler";
 
 const JOB_TYPE = JobType.BumpReminder;
 const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas
-const BUMP_ROLE_NAME = "Recuerdame bumpear";
 export const BUMP_BUTTON_ID = "bump-role-toggle";
 
 let cachedRoleId: string | null = null;
@@ -63,7 +62,7 @@ export class BumpService {
 		if (!guildId) return null;
 
 		const roles = await client.roles.list(guildId, true);
-		const existing = roles.find((r) => r.name === BUMP_ROLE_NAME);
+		const existing = roles.find((r) => r.id === CONFIG.ROLES.BUMP);
 
 		if (existing) {
 			cachedRoleId = existing.id;
@@ -73,7 +72,7 @@ export class BumpService {
 		const created = await client.roles.create(
 			guildId,
 			{
-				name: BUMP_ROLE_NAME,
+				name: "Recuerdame bumpear",
 			},
 			"Rol para recordatorios de bump",
 		);

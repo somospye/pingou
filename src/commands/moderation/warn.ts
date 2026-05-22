@@ -47,7 +47,7 @@ const options = {
 export default class WarnCommand extends Command {
 	override async run(ctx: CommandContext<typeof options>) {
 		const { usuario, razon } = ctx.options;
-		const guildId = ctx.guildId;
+		const { guildId } = ctx;
 
 		if (!guildId) return;
 
@@ -103,7 +103,7 @@ export default class WarnCommand extends Command {
 				],
 			},
 			fallbackPayload: {
-				content: `<@${usuario.id}> Advertencia recibida. (MDs cerrados)\nRazon: ${razon}`,
+				content: `<@${usuario.id}> Recibiste una Advertencia, pero tenias los MDs cerrados. Te recomendamos revisar </cases:1399840670063005887> para más información.`,
 			},
 			fallbackChannelId: CONFIG.CHANNELS.CHAT_GENERAL,
 		});

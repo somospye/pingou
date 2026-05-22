@@ -11,7 +11,7 @@ export default class BumpRoleButton extends ComponentCommand {
 	}
 
 	override async run(ctx: ComponentContext<typeof this.componentType>) {
-		const guildId = ctx.guildId;
+		const { guildId } = ctx;
 		if (!guildId) return;
 
 		await ctx.deferReply(true);
