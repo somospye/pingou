@@ -773,6 +773,41 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	ecoBalanceEmbed(data: {
+		userId: string;
+		username: string;
+		avatarUrl?: string;
+		coins: number;
+	}): Embed {
+		return new Embed()
+			.setTitle(`Balance de ${data.username}`)
+			.setColor("Gold")
+			.setThumbnail(data.avatarUrl || "")
+			.setDescription(
+				`<@${data.userId}> tiene **${data.coins} ${CONFIG.ECONOMY.CURRENCY}**.`,
+			)
+			.setFooter({ text: `ID: ${data.userId}` })
+			.setTimestamp();
+	},
+
+	ecoTopEmbed(data: {
+		users: Array<{ userId: string; coins: number }>;
+	}): Embed {
+		const lines = data.users.length
+			? data.users.map((u, i) => {
+					const medal =
+						i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+					return `${medal} <@${u.userId}> — **${u.coins}** ${CONFIG.ECONOMY.CURRENCY}`;
+				})
+			: ["*Sin datos.*"];
+
+		return new Embed()
+			.setTitle(`💰 Top ${CONFIG.ECONOMY.CURRENCY}`)
+			.setDescription(lines.join("\n"))
+			.setColor(0xf1c40f)
+			.setTimestamp();
+	},
+
 	topNegativeEmbed(data: {
 		users: Array<{ userId: string; points: number }>;
 		period: string;
