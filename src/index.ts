@@ -5,6 +5,7 @@ import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";
 import { moderationService } from "./services/moderationService";
 import { schedulerService } from "./services/scheduler";
+import { voiceActivityService } from "./services/voiceActivityService";
 import { voiceRestrictService } from "./services/voiceRestrictService";
 
 async function boostrap() {
@@ -32,9 +33,17 @@ async function boostrap() {
 		1000 * 60 * 60,
 	);
 
+	setInterval(
+		() => {
+			voiceActivityService.runAwardCycle(client).catch(console.error);
+		},
+		1000 * 60 * 5,
+	);
+
 	await cooldownService.cleanup().catch(console.error);
 	await moderationService.cleanupExpiredLimits().catch(console.error);
 	await voiceRestrictService.recoverOnStartup(client).catch(console.error);
+	await voiceActivityService.recoverOnStartup(client).catch(console.error);
 	await bumpService.ensureBumpRole(client).catch(console.error);
 	await schedulerService.recoverOnStartup(client).catch(console.error);
 }

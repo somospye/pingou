@@ -800,4 +800,45 @@ export const Embeds = {
 			.setColor(0xe74c3c)
 			.setTimestamp();
 	},
+
+	voiceStatsEmbed(data: {
+		userId: string;
+		username: string;
+		avatarUrl?: string;
+		points: number;
+		totalMinutes: number;
+	}): Embed {
+		return new Embed()
+			.setTitle(`Actividad de voz de ${data.username}`)
+			.setColor("Blue")
+			.setThumbnail(data.avatarUrl || "")
+			.addFields([
+				{ name: "Puntos", value: `**${data.points}**`, inline: true },
+				{
+					name: "Tiempo en voz",
+					value: formatDurationForModEmbed(data.totalMinutes * 60),
+					inline: true,
+				},
+			])
+			.setFooter({ text: `ID: ${data.userId}` })
+			.setTimestamp();
+	},
+
+	voiceTopEmbed(data: {
+		users: Array<{ userId: string; points: number; totalMinutes: number }>;
+	}): Embed {
+		const lines = data.users.length
+			? data.users.map((u, i) => {
+					const medal =
+						i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+					return `${medal} <@${u.userId}> — **${u.points}** pts (${formatDurationForModEmbed(u.totalMinutes * 60)})`;
+				})
+			: ["*Sin datos.*"];
+
+		return new Embed()
+			.setTitle("🏆 Top Actividad en Voz")
+			.setDescription(lines.join("\n"))
+			.setColor(0xf1c40f)
+			.setTimestamp();
+	},
 };
