@@ -172,6 +172,48 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	postMoveVoteEmbed(data: {
+		targetForumId: string;
+		reason: string;
+		initiatorId: string;
+		votes: number;
+		requiredVotes: number;
+	}): Embed {
+		return new Embed()
+			.setTitle("Votación para mover este post")
+			.setColor("Orange")
+			.setDescription(
+				`<@${data.initiatorId}> propone mover este post a <#${data.targetForumId}>.`,
+			)
+			.addFields([
+				{ name: "Motivo", value: data.reason, inline: false },
+				{
+					name: "Votos a favor",
+					value: `**${data.votes}** / ${data.requiredVotes}`,
+					inline: false,
+				},
+			])
+			.setFooter({
+				text: "El autor del post puede aprobar el traslado con un solo voto.",
+			})
+			.setTimestamp();
+	},
+
+	postMovedEmbed(data: {
+		sourceForumId: string;
+		movedById: string;
+		reason: string;
+	}): Embed {
+		return new Embed()
+			.setTitle("Post movido")
+			.setColor("Blue")
+			.setDescription(
+				`Este post fue movido desde <#${data.sourceForumId}> por <@${data.movedById}>.`,
+			)
+			.addFields([{ name: "Motivo", value: data.reason, inline: false }])
+			.setTimestamp();
+	},
+
 	pingEmbed(latency: number): Embed {
 		return new Embed()
 			.setTitle(`**LATENCIA DEL BOT**`)

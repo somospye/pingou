@@ -63,6 +63,12 @@ export const CONFIG = {
 		mod: { warn: -1, mute: 10, kick: 5, ban: 2, restrict: 2 },
 		admin: { warn: -1, mute: -1, kick: -1, ban: -1, restrict: -1 },
 	},
+	POST_MOVE: {
+		REQUIRED_VOTES: 3,
+		EXPIRY_HOURS: 24,
+		// Rep tiers desde este puntaje (Veterano+) pueden iniciar votaciones
+		TRUST_MIN_REP_POINTS: 80,
+	},
 	REP_TIERS: [
 		{ minPoints: 1, roleId: "806755636288815115" }, // Iniciante
 		{ minPoints: 16, roleId: "805073774088945725" }, // Regular
