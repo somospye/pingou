@@ -172,6 +172,23 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	adRepostDMEmbed(data: {
+		channelId: string;
+		windowDays: number;
+		retryTimestamp: number;
+	}): Embed {
+		return new Embed()
+			.setTitle("Publicación repetida eliminada")
+			.setColor("Red")
+			.setDescription(
+				`Tu publicación en <#${data.channelId}> fue eliminada porque es igual o muy similar a una que ya publicaste en los últimos **${data.windowDays} días**.\n\nPodrás volver a publicarla <t:${data.retryTimestamp}:R>.`,
+			)
+			.setFooter({
+				text: "Si crees que esto fue un error, contacta al staff.",
+			})
+			.setTimestamp();
+	},
+
 	pingEmbed(latency: number): Embed {
 		return new Embed()
 			.setTitle(`**LATENCIA DEL BOT**`)
