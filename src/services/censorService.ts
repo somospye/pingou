@@ -104,10 +104,20 @@ export class CensorService {
 			const start = indexMap[match.index];
 			const last = indexMap[match.index + match[0].length - 1];
 			if (start === undefined || last === undefined) continue;
-			censored =
-				censored.slice(0, start) +
-				"\\*".repeat(last + 1 - start) +
-				censored.slice(last + 1);
+			const wordLen = last + 1 - start;
+			if (wordLen <= 2) {
+				censored =
+					censored.slice(0, start) +
+					"*".repeat(wordLen) +
+					censored.slice(last + 1);
+			} else {
+				censored =
+					censored.slice(0, start) +
+					censored.charAt(start) +
+					"*".repeat(wordLen - 2) +
+					censored.charAt(last) +
+					censored.slice(last + 1);
+			}
 		}
 		return censored;
 	}
