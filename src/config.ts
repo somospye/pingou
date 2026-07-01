@@ -47,27 +47,6 @@ export const CONFIG = {
 		MEMES: "783188322087993346",
 	},
 	MEMES_REACTIONS: ["796227219591921704", "♻️", "💤"] as string[],
-	CENSOR: {
-		// Palabras censuradas en cualquier canal. Escribirlas en minúsculas y
-		// sin acentos: el matching normaliza el mensaje (lowercase, sin
-		// acentos, leet básico) antes de comparar palabra por palabra.
-		WORDS: [
-			"maricon",
-			"maricones",
-			"marica",
-			"maricas",
-			"joto",
-			"jotos",
-			"sudaca",
-			"sudacas",
-			"gilipollas",
-			"subnormal",
-			"pendejo",
-			"pendeja",
-			"hijo de puta",
-			"hija de puta",
-		] as string[],
-	},
 	CATEGORIES: {
 		FORUMS: "1290372079279145092",
 	},
