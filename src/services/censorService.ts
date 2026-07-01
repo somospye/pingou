@@ -108,13 +108,13 @@ export class CensorService {
 			if (wordLen <= 2) {
 				censored =
 					censored.slice(0, start) +
-					"*".repeat(wordLen) +
+					"\\*".repeat(wordLen) +
 					censored.slice(last + 1);
 			} else {
 				censored =
 					censored.slice(0, start) +
 					censored.charAt(start) +
-					"*".repeat(wordLen - 2) +
+					"\\*".repeat(wordLen - 2) +
 					censored.charAt(last) +
 					censored.slice(last + 1);
 			}
