@@ -5,6 +5,7 @@ import { handleAiMention } from "./aiMention";
 import { handleAutoThread } from "./autoThread";
 import { handleMemes } from "./memes";
 import { handleThanks } from "./thanks";
+import { handleWordCensor } from "./wordCensor";
 
 /**
  * Único handler de `messageCreate`. Seyfert almacena handlers como
@@ -14,6 +15,8 @@ import { handleThanks } from "./thanks";
  * sub-handlers en archivos hermanos, mismo patrón que
  * `src/events/messageReactionAdd/`.
  *
+ * - wordCensor: corre primero — un mensaje censurado se borra y no debe
+ *   disparar memes, threads, IA ni gracias
  * - memes: aditivo (corre junto a los demás)
  * - autoThread / aiMention / thanks: mutuamente excluyentes. Devuelven
  *   `Promise<boolean>` indicando si manejaron el mensaje. Índex corta la
@@ -29,6 +32,8 @@ export default createEvent({
 		}
 
 		if (message.author.bot) return;
+
+		if (await handleWordCensor(message, client)) return;
 
 		// Aditivo — corre y deja seguir la cadena
 		await handleMemes(message, client);
