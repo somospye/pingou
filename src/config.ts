@@ -62,7 +62,11 @@ export const CONFIG = {
 	// no puede volver a publicar contenido igual o muy similar en el mismo
 	// canal dentro de la ventana. Agregar acá otros canales de promo a vigilar.
 	AD_GUARD: {
-		CHANNELS: ["793661563705360394"] as string[], // JOBS_OFFERS
+		CHANNELS: [
+			"793661563705360394",
+			"901578179431530496",
+			"785303382314844160",
+		] as string[], // JOBS_OFFERS
 		WINDOW_DAYS: 7,
 		SIMILARITY_THRESHOLD: 0.85,
 	},
