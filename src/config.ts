@@ -58,6 +58,14 @@ export const CONFIG = {
 		"924436818718494740",
 		"1249222442199814257",
 	],
+	// Control de publicidad repetida en canales de autopromoción. Un usuario
+	// no puede volver a publicar contenido igual o muy similar en el mismo
+	// canal dentro de la ventana. Agregar acá otros canales de promo a vigilar.
+	AD_GUARD: {
+		CHANNELS: ["793661563705360394"] as string[], // JOBS_OFFERS
+		WINDOW_DAYS: 7,
+		SIMILARITY_THRESHOLD: 0.85,
+	},
 	REPUTATION_FOR_PRIORITY: 5,
 	ROLE_LIMITS: {
 		helper: { warn: -1, mute: 5, kick: 1, ban: 1, restrict: 1 },
