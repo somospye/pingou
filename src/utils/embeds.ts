@@ -185,9 +185,9 @@ export const Embeds = {
 			)
 			.setFooter({
 				text: "Si crees que esto fue un error, contacta al staff.",
-			})
-    },
-	
+			});
+	},
+
 	reportEmbed(data: {
 		reporterId: string;
 		reporterTag: string;
