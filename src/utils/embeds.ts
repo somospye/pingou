@@ -256,6 +256,31 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	forumPostDeletedEmbed(data: {
+		title: string;
+		forumName: string;
+		authorId: string | null;
+	}): Embed {
+		return new Embed()
+			.setTitle("Post de foro eliminado")
+			.setDescription(
+				"El mensaje original del post fue borrado, por lo que el hilo se eliminó automáticamente.",
+			)
+			.setColor("Red")
+			.addFields([
+				{ name: "Título", value: data.title, inline: false },
+				{ name: "Foro", value: data.forumName, inline: true },
+				{
+					name: "Autor",
+					value: data.authorId
+						? `<@${data.authorId}> (${data.authorId})`
+						: "Desconocido",
+					inline: true,
+				},
+			])
+			.setTimestamp();
+	},
+
 	modActionEmbed(data: {
 		caseId: number;
 		type: string;
