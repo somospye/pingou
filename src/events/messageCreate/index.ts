@@ -1,6 +1,7 @@
 import { createEvent } from "seyfert";
 import { CONFIG } from "@/config";
 import { bumpService } from "@/services/bumpService";
+import { handleAdGuard } from "./adGuard";
 import { handleAiMention } from "./aiMention";
 import { handleAutoThread } from "./autoThread";
 import { handleMemes } from "./memes";
@@ -18,7 +19,9 @@ import { handleWordCensor } from "./wordCensor";
  * - wordCensor: corre primero — un mensaje censurado se borra y no debe
  *   disparar memes, threads, IA ni gracias
  * - memes: aditivo (corre junto a los demás)
- * - autoThread / aiMention / thanks: mutuamente excluyentes. Devuelven
+ * - adGuard / autoThread / aiMention / thanks: mutuamente excluyentes.
+ *   adGuard corre antes que autoThread: un mensaje borrado por publicidad
+ *   repetida no debe generar thread. Devuelven
  *   `Promise<boolean>` indicando si manejaron el mensaje. Índex corta la
  *   cadena con `if (await handleX(...)) return;`.
  */
@@ -39,6 +42,7 @@ export default createEvent({
 		await handleMemes(message, client);
 
 		// Mutuamente excluyentes — el primero que aplique corta la cadena
+		if (await handleAdGuard(message, client)) return;
 		if (await handleAutoThread(message, client)) return;
 		if (await handleAiMention(message, client)) return;
 		await handleThanks(message, client);
