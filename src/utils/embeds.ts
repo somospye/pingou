@@ -172,6 +172,56 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	reportEmbed(data: {
+		reporterId: string;
+		reporterTag: string;
+		reportedUserId: string;
+		reportedTag?: string;
+		reason: string;
+		evidence?: string;
+		messageUrl?: string;
+		messageExcerpt?: string;
+	}): Embed {
+		const reportedValue = data.reportedTag
+			? `${data.reportedTag} (<@${data.reportedUserId}>)`
+			: `<@${data.reportedUserId}> (${data.reportedUserId})`;
+
+		const fields = [
+			{ name: "Usuario reportado", value: reportedValue, inline: false },
+			{ name: "Motivo", value: data.reason.slice(0, 1024), inline: false },
+		];
+
+		if (data.evidence) {
+			fields.push({
+				name: "Prueba",
+				value: data.evidence.slice(0, 1024),
+				inline: false,
+			});
+		}
+
+		if (data.messageUrl) {
+			const excerpt = data.messageExcerpt ? `\n${data.messageExcerpt}` : "";
+			fields.push({
+				name: "Mensaje reportado",
+				value: `[Ver mensaje](${data.messageUrl})${excerpt}`,
+				inline: false,
+			});
+		}
+
+		fields.push({
+			name: "Reportado por",
+			value: `${data.reporterTag} (<@${data.reporterId}>)`,
+			inline: false,
+		});
+
+		return new Embed()
+			.setTitle("Nuevo reporte")
+			.setColor("Orange")
+			.addFields(fields)
+			.setFooter({ text: `ID reportado: ${data.reportedUserId}` })
+			.setTimestamp();
+	},
+
 	pingEmbed(latency: number): Embed {
 		return new Embed()
 			.setTitle(`**LATENCIA DEL BOT**`)
