@@ -52,6 +52,7 @@ export const CONFIG = {
 		JOBS_VERIFICATION: "925121655578173440",
 		CHAT_GENERAL: "768329192131526686",
 		MOD_LOG: "844385995352047646",
+		REPORTS: "1521875580843200633", // same as MOD_LOG for now
 		JOIN_LOG: "844386147626385418",
 		BUMP: "768329192131526686",
 		REP_NOTIFICATION: "925121655578173440",
@@ -71,6 +72,18 @@ export const CONFIG = {
 		"924436818718494740",
 		"1249222442199814257",
 	],
+	// Control de publicidad repetida en canales de autopromoción. Un usuario
+	// no puede volver a publicar contenido igual o muy similar en el mismo
+	// canal dentro de la ventana. Agregar acá otros canales de promo a vigilar.
+	AD_GUARD: {
+		CHANNELS: [
+			"793661563705360394",
+			"901578179431530496",
+			"785303382314844160",
+		] as string[], // JOBS_OFFERS
+		WINDOW_DAYS: 7,
+		SIMILARITY_THRESHOLD: 0.85,
+	},
 	REPUTATION_FOR_PRIORITY: 5,
 	// Self-assignable roles posted with /autoroles. Each category becomes one
 	// embed + string select menu. Fill the role IDs from the #Roles channel.
@@ -136,6 +149,67 @@ export const CONFIG = {
 		] as ReadonlyArray<{ pattern: RegExp; score: number }>,
 	},
 };
+
+const SNOWFLAKE_REGEX = /^\d{17,20}$/;
+
+const validateConfig = (): void => {
+	const errors: string[] = [];
+
+	const checkId = (path: string, value: string): void => {
+		if (!SNOWFLAKE_REGEX.test(value)) {
+			errors.push(`${path}: expected a 17-20 digit Discord ID, got "${value}"`);
+		}
+	};
+
+	checkId("GUILD_ID", CONFIG.GUILD_ID);
+	checkId("EMOJIS.PEPEDOWN", CONFIG.EMOJIS.PEPEDOWN);
+
+	for (const [key, value] of Object.entries(CONFIG.ROLES)) {
+		// EVERYONE is a sentinel: the auth middleware treats "" as a bypass.
+		if (key === "EVERYONE") {
+			if (value !== "") {
+				errors.push(
+					`ROLES.EVERYONE: must stay "" (auth bypass sentinel), got "${value}"`,
+				);
+			}
+			continue;
+		}
+		checkId(`ROLES.${key}`, value);
+	}
+
+	for (const [key, value] of Object.entries(CONFIG.RESTRICTIONS)) {
+		checkId(`RESTRICTIONS.${key}`, value);
+	}
+	for (const [key, value] of Object.entries(CONFIG.CHANNELS)) {
+		checkId(`CHANNELS.${key}`, value);
+	}
+	for (const [key, value] of Object.entries(CONFIG.CATEGORIES)) {
+		checkId(`CATEGORIES.${key}`, value);
+	}
+
+	CONFIG.AUTO_THREAD_CHANNELS.forEach((id, i) => {
+		checkId(`AUTO_THREAD_CHANNELS[${i}]`, id);
+	});
+	CONFIG.REP_TIERS.forEach((tier, i) => {
+		checkId(`REP_TIERS[${i}].roleId`, tier.roleId);
+	});
+	checkId("OTHER.DISBOARD_ID", CONFIG.OTHER.DISBOARD_ID);
+
+	// Each entry is either a custom emoji ID or a unicode emoji.
+	CONFIG.MEMES_REACTIONS.forEach((emoji, i) => {
+		if (!SNOWFLAKE_REGEX.test(emoji) && (!emoji || /^\d+$/.test(emoji))) {
+			errors.push(
+				`MEMES_REACTIONS[${i}]: expected a 17-20 digit emoji ID or a unicode emoji, got "${emoji}"`,
+			);
+		}
+	});
+
+	if (errors.length) {
+		throw new Error(`Invalid CONFIG values:\n${errors.join("\n")}`);
+	}
+};
+
+validateConfig();
 
 const Envscheme = z.object({
 	POSTGRES_URL: z.string(),

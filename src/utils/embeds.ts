@@ -196,6 +196,72 @@ export const Embeds = {
 			.setColor("Green");
 	},
 
+	adRepostDMEmbed(data: {
+		channelId: string;
+		windowDays: number;
+		retryTimestamp: number;
+	}): Embed {
+		return new Embed()
+			.setTitle("Publicación repetida eliminada")
+			.setColor("Red")
+			.setDescription(
+				`Tu publicación en <#${data.channelId}> fue eliminada porque es igual o muy similar a una que ya publicaste en los últimos **${data.windowDays} días**.\n\nPodrás volver a publicarla <t:${data.retryTimestamp}:R>.`,
+			)
+			.setFooter({
+				text: "Si crees que esto fue un error, contacta al staff.",
+			});
+	},
+
+	reportEmbed(data: {
+		reporterId: string;
+		reporterTag: string;
+		reportedUserId: string;
+		reportedTag?: string;
+		reason: string;
+		evidence?: string;
+		messageUrl?: string;
+		messageExcerpt?: string;
+	}): Embed {
+		const reportedValue = data.reportedTag
+			? `${data.reportedTag} (<@${data.reportedUserId}>)`
+			: `<@${data.reportedUserId}> (${data.reportedUserId})`;
+
+		const fields = [
+			{ name: "Usuario reportado", value: reportedValue, inline: false },
+			{ name: "Motivo", value: data.reason.slice(0, 1024), inline: false },
+		];
+
+		if (data.evidence) {
+			fields.push({
+				name: "Prueba",
+				value: data.evidence.slice(0, 1024),
+				inline: false,
+			});
+		}
+
+		if (data.messageUrl) {
+			const excerpt = data.messageExcerpt ? `\n${data.messageExcerpt}` : "";
+			fields.push({
+				name: "Mensaje reportado",
+				value: `[Ver mensaje](${data.messageUrl})${excerpt}`,
+				inline: false,
+			});
+		}
+
+		fields.push({
+			name: "Reportado por",
+			value: `${data.reporterTag} (<@${data.reporterId}>)`,
+			inline: false,
+		});
+
+		return new Embed()
+			.setTitle("Nuevo reporte")
+			.setColor("Orange")
+			.addFields(fields)
+			.setFooter({ text: `ID reportado: ${data.reportedUserId}` })
+			.setTimestamp();
+	},
+
 	pingEmbed(latency: number): Embed {
 		return new Embed()
 			.setTitle(`**LATENCIA DEL BOT**`)
@@ -227,6 +293,31 @@ export const Embeds = {
 			)
 			.setURL(`https://discord.com/channels/${data.guildId}/${data.threadId}`)
 			.setColor("Blue")
+			.setTimestamp();
+	},
+
+	forumPostDeletedEmbed(data: {
+		title: string;
+		forumName: string;
+		authorId: string | null;
+	}): Embed {
+		return new Embed()
+			.setTitle("Post de foro eliminado")
+			.setDescription(
+				"El mensaje original del post fue borrado, por lo que el hilo se eliminó automáticamente.",
+			)
+			.setColor("Red")
+			.addFields([
+				{ name: "Título", value: data.title, inline: false },
+				{ name: "Foro", value: data.forumName, inline: true },
+				{
+					name: "Autor",
+					value: data.authorId
+						? `<@${data.authorId}> (${data.authorId})`
+						: "Desconocido",
+					inline: true,
+				},
+			])
 			.setTimestamp();
 	},
 
