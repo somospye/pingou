@@ -84,6 +84,20 @@ export const CONFIG = {
 		{ minPoints: 100, roleId: "769538041084903464" }, // Sabio
 		{ minPoints: 150, roleId: "838285410995929119" }, // Experto
 	],
+	ECONOMY: {
+		CURRENCY: "PyE Coins",
+		DAILY: { MIN: 100, MAX: 200, COOLDOWN_HOURS: 24 },
+		WORK: { MIN: 50, MAX: 150, COOLDOWN_HOURS: 1 },
+		ROB: {
+			COOLDOWN_HOURS: 4,
+			SUCCESS_RATE: 0.4,
+			STEAL_PCT: 0.15,
+			MAX_STEAL: 500,
+			FINE_PCT: 0.1,
+			MIN_TARGET_BALANCE: 100,
+		},
+		TRANSFER_TAX: 0.05,
+	},
 	OTHER: {
 		DISBOARD_ID: "302050872383242240",
 		THANKS_TERMS: [
