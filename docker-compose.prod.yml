@@ -22,6 +22,9 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - PUBLIC_KEY=${PUBLIC_KEY}
       - AI_API_KEY=${AI_API_KEY}
+      - CENSOR_WORDS_PATH=/app/censorWords.json
+    volumes:
+      - ./censorWords.json:/app/censorWords.json
     restart: unless-stopped
 
 volumes:
