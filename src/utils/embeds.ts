@@ -1,6 +1,6 @@
 import type { CompletionUsage } from "openai/resources";
 import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
-import { CONFIG } from "@/config";
+import { type AutoRoleCategory, CONFIG } from "@/config";
 import type { CreateRepLogI } from "@/services/reputationService";
 import { formatDurationForModEmbed } from "./duration";
 import type { SystemStats } from "./system";
@@ -170,6 +170,30 @@ export const Embeds = {
 				`La oferta de <@${userId}> ha sido rechazada por el staff.`,
 			)
 			.setTimestamp();
+	},
+
+	autoRoleCategoryEmbed(category: AutoRoleCategory): Embed {
+		return new Embed()
+			.setTitle(category.title)
+			.setDescription(category.description)
+			.setColor("Blurple");
+	},
+
+	autoRolesUpdatedEmbed(data: { added: string[]; removed: string[] }): Embed {
+		const lines: string[] = [];
+		if (data.added.length) {
+			lines.push(`**+${data.added.length}:** ${data.added.join(", ")}`);
+		}
+		if (data.removed.length) {
+			lines.push(`**-${data.removed.length}:** ${data.removed.join(", ")}`);
+		}
+
+		return new Embed()
+			.setTitle("Roles actualizados")
+			.setDescription(
+				lines.length ? lines.join("\n") : "No hubo cambios en tus roles.",
+			)
+			.setColor("Green");
 	},
 
 	adRepostDMEmbed(data: {
