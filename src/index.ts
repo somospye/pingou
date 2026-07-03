@@ -1,6 +1,7 @@
 import { Client, type ParseClient, type ParseMiddlewares } from "seyfert";
 import { CONFIG } from "./config";
 import { middlewares } from "./middlewares";
+import { adGuardService } from "./services/adGuardService";
 import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";
 import { moderationService } from "./services/moderationService";
@@ -30,11 +31,13 @@ async function boostrap() {
 			cooldownService.cleanup().catch(console.error);
 			moderationService.cleanupExpiredLimits().catch(console.error);
 			movePostService.cleanupExpired().catch(console.error);
+			adGuardService.cleanup().catch(console.error);
 		},
 		1000 * 60 * 60,
 	);
 
 	await cooldownService.cleanup().catch(console.error);
+	await adGuardService.cleanup().catch(console.error);
 	await moderationService.cleanupExpiredLimits().catch(console.error);
 	await movePostService.cleanupExpired().catch(console.error);
 	await voiceRestrictService.recoverOnStartup(client).catch(console.error);
