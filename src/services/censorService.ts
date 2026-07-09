@@ -12,7 +12,15 @@ const LEET_CHARS: Record<string, string> = {
 	"4": "a",
 	"5": "s",
 	"7": "t",
+	"@": "a",
+	"!": "i",
+	$: "s",
+	"|": "i",
+	"+": "t",
+	"€": "e",
 };
+
+const SEPARATORS = new Set([".", "-", "_", "*"]);
 
 interface ChannelWebhook {
 	id: string;
@@ -36,7 +44,14 @@ function buildNormalized(text: string): {
 			.normalize("NFD")
 			.replace(/[̀-ͯ]/g, "");
 		const mapped = LEET_CHARS[stripped] ?? stripped;
+		if (SEPARATORS.has(mapped)) continue;
 		for (const char of mapped) {
+			if (
+				normalized.length >= 2 &&
+				normalized[normalized.length - 1] === char &&
+				normalized[normalized.length - 2] === char
+			)
+				continue;
 			normalized += char;
 			indexMap.push(i);
 		}
@@ -86,7 +101,7 @@ export class CensorService {
 		if (!this._words.length) return null;
 		if (!this._pattern) {
 			const alternatives = this._words.map(escapeRegExp).join("|");
-			this._pattern = new RegExp(`\\b(?:${alternatives})\\b`, "g");
+			this._pattern = new RegExp(`\\b(?:${alternatives})[a-záéíóúüñ]*`, "g");
 		}
 		return this._pattern;
 	}
