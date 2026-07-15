@@ -1,10 +1,12 @@
 import type { Message, UsingClient } from "seyfert";
+import { CONFIG } from "@/config";
 import { censorService } from "@/services/censorService";
 
 export async function handleWordCensor(
 	message: Message,
 	client: UsingClient,
 ): Promise<boolean> {
+	if (!CONFIG.CENSOR_ENABLED) return false;
 	if (!censorService.words.length) return false;
 
 	const censored = censorService.censor(message.content ?? "");

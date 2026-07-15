@@ -84,6 +84,8 @@ export const CONFIG = {
 		{ minPoints: 100, roleId: "769538041084903464" }, // Sabio
 		{ minPoints: 150, roleId: "838285410995929119" }, // Experto
 	],
+	// Activa o desactiva el sistema de censura de palabras
+	CENSOR_ENABLED: false as boolean,
 	OTHER: {
 		DISBOARD_ID: "302050872383242240",
 		THANKS_TERMS: [

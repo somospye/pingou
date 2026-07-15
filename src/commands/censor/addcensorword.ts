@@ -28,6 +28,17 @@ const options = {
 @Middlewares(["auth"])
 export default class AddCensorWordCommand extends Command {
 	override async run(ctx: CommandContext<typeof options>) {
+		if (!CONFIG.CENSOR_ENABLED) {
+			await ctx.write({
+				embeds: [
+					Embeds.errorEmbed(
+						"Censura desactivada",
+						"El sistema de censura está desactivado. Actívalo en `CONFIG.CENSOR_ENABLED`.",
+					),
+				],
+			});
+			return;
+		}
 		const { palabra } = ctx.options;
 		const added = await censorService.addWord(palabra);
 		if (added) {
