@@ -76,6 +76,10 @@ export const CONFIG = {
 		mod: { warn: -1, mute: 10, kick: 5, ban: 2, restrict: 2 },
 		admin: { warn: -1, mute: -1, kick: -1, ban: -1, restrict: -1 },
 	},
+	VOICE_ACTIVITY: {
+		MINUTES_PER_POINT: 10,
+		MIN_HUMANS: 2,
+	},
 	REP_TIERS: [
 		{ minPoints: 1, roleId: "806755636288815115" }, // Iniciante
 		{ minPoints: 16, roleId: "805073774088945725" }, // Regular
