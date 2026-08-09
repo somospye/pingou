@@ -864,6 +864,51 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	ticketPanelEmbed(): Embed {
+		return new Embed()
+			.setTitle("Soporte — abre un ticket")
+			.setDescription(
+				"¿Necesitas ayuda del staff o quieres reportar algo de forma privada?\n\nPulsa el botón de abajo para abrir un ticket. Se creará un hilo privado donde solo tú y el staff podrán hablar.",
+			)
+			.setColor("Blue")
+			.setFooter({ text: "Solo puedes tener un ticket abierto a la vez." });
+	},
+
+	ticketOpenedEmbed(data: {
+		userId: string;
+		subject: string;
+		description?: string;
+	}): Embed {
+		const fields = [{ name: "Asunto", value: data.subject, inline: false }];
+
+		if (data.description) {
+			fields.push({
+				name: "Descripción",
+				value: data.description.slice(0, 1024),
+				inline: false,
+			});
+		}
+
+		return new Embed()
+			.setTitle("Nuevo ticket")
+			.setDescription(
+				`Ticket abierto por <@${data.userId}>. El staff te atenderá en breve.\n\nCuando el problema esté resuelto, usa \`/ticket close\` para cerrarlo.`,
+			)
+			.setColor("Blue")
+			.addFields(fields)
+			.setTimestamp();
+	},
+
+	ticketClosedEmbed(data: { closedBy: string; reason?: string }): Embed {
+		return new Embed()
+			.setTitle("Ticket cerrado")
+			.setDescription(
+				`Este ticket fue cerrado por <@${data.closedBy}>.${data.reason ? `\n**Motivo:** ${data.reason}` : ""}`,
+			)
+			.setColor("Red")
+			.setTimestamp();
+	},
+
 	topNegativeEmbed(data: {
 		users: Array<{ userId: string; points: number }>;
 		period: string;
