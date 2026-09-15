@@ -5,6 +5,7 @@ import { adGuardService } from "./services/adGuardService";
 import { bumpService } from "./services/bumpService";
 import { cooldownService } from "./services/cooldown";
 import { moderationService } from "./services/moderationService";
+import { movePostService } from "./services/movePostService";
 import { schedulerService } from "./services/scheduler";
 import { voiceRestrictService } from "./services/voiceRestrictService";
 
@@ -29,6 +30,7 @@ async function boostrap() {
 		() => {
 			cooldownService.cleanup().catch(console.error);
 			moderationService.cleanupExpiredLimits().catch(console.error);
+			movePostService.cleanupExpired().catch(console.error);
 			adGuardService.cleanup().catch(console.error);
 		},
 		1000 * 60 * 60,
@@ -37,6 +39,7 @@ async function boostrap() {
 	await cooldownService.cleanup().catch(console.error);
 	await adGuardService.cleanup().catch(console.error);
 	await moderationService.cleanupExpiredLimits().catch(console.error);
+	await movePostService.cleanupExpired().catch(console.error);
 	await voiceRestrictService.recoverOnStartup(client).catch(console.error);
 	await bumpService.ensureBumpRole(client).catch(console.error);
 	await schedulerService.recoverOnStartup(client).catch(console.error);
