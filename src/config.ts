@@ -45,6 +45,8 @@ export const CONFIG = {
 		REP_LOG: "932871373280395314",
 		CHAT_PROGRAMADORES: "807385882868580392",
 		MEMES: "783188322087993346",
+		PROJECTS: "1400218922753593464", // foro 🔗┊proyectos
+		HIGHLIGHTS: "1494382776743624846", // foro ⭐┊destacados
 	},
 	MEMES_REACTIONS: ["796227219591921704", "♻️", "💤"] as string[],
 	CATEGORIES: {
@@ -69,6 +71,13 @@ export const CONFIG = {
 		] as string[], // JOBS_OFFERS
 		WINDOW_DAYS: 7,
 		SIMILARITY_THRESHOLD: 0.85,
+	},
+	// Difusión y destacados de 🔗┊proyectos: cada post se anuncia en
+	// chat-programadores y, al juntar HIGHLIGHT_STARS reacciones ⭐, el bot
+	// publica una copia en ⭐┊destacados con el tag indicado.
+	PROJECTS: {
+		HIGHLIGHT_STARS: 10,
+		HIGHLIGHT_TAG: "1494397836920492233", // tag "Proyectos" en ⭐┊destacados
 	},
 	REPUTATION_FOR_PRIORITY: 5,
 	ROLE_LIMITS: {
@@ -185,6 +194,7 @@ const validateConfig = (): void => {
 		checkId(`REP_TIERS[${i}].roleId`, tier.roleId);
 	});
 	checkId("OTHER.DISBOARD_ID", CONFIG.OTHER.DISBOARD_ID);
+	checkId("PROJECTS.HIGHLIGHT_TAG", CONFIG.PROJECTS.HIGHLIGHT_TAG);
 
 	// Each entry is either a custom emoji ID or a unicode emoji.
 	CONFIG.MEMES_REACTIONS.forEach((emoji, i) => {

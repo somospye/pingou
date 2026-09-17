@@ -9,3 +9,7 @@ export function cleanString(
 		.replace(/\n\s+/g, "\n")
 		.trim();
 }
+
+export function truncate(text: string, max: number): string {
+	return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}

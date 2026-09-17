@@ -1,14 +1,26 @@
 import type { CompletionUsage } from "openai/resources";
-import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
+import {
+	type CommandContext,
+	Embed,
+	type InMessageEmbed,
+	type Message,
+} from "seyfert";
 import { CONFIG } from "@/config";
 import type { CreateRepLogI } from "@/services/reputationService";
 import { formatDurationForModEmbed } from "./duration";
+import { truncate } from "./string";
 import type { SystemStats } from "./system";
 
 export function hasEmbed(
 	embeds: InMessageEmbed[],
 ): embeds is [InMessageEmbed, ...InMessageEmbed[]] {
 	return embeds.length > 0;
+}
+
+export function firstImageUrl(message?: Message | null): string | undefined {
+	return message?.attachments.find((att) =>
+		att.contentType?.startsWith("image/"),
+	)?.proxyUrl;
 }
 
 export const Embeds = {
@@ -312,6 +324,48 @@ export const Embeds = {
 			.setURL(`https://discord.com/channels/${data.guildId}/${data.threadId}`)
 			.setColor("Blue")
 			.setTimestamp();
+	},
+
+	projectAnnouncementEmbed(data: {
+		title: string;
+		threadId: string;
+		ownerId: string;
+		summary?: string;
+		imageUrl?: string;
+	}): Embed {
+		const intro = `<@${data.ownerId}> compartió un nuevo proyecto en <#${CONFIG.CHANNELS.PROJECTS}>.`;
+		const embed = new Embed()
+			.setTitle(`🔗 ${data.title}`)
+			.setURL(
+				`https://discord.com/channels/${CONFIG.GUILD_ID}/${data.threadId}`,
+			)
+			.setDescription(
+				data.summary ? `${intro}\n\n${truncate(data.summary, 300)}` : intro,
+			)
+			.setColor("Blue")
+			.setFooter({
+				text: `Reacciona con ⭐ en la publicación. Con ${CONFIG.PROJECTS.HIGHLIGHT_STARS} estrellas pasa a destacados.`,
+			})
+			.setTimestamp();
+		if (data.imageUrl) embed.setImage(data.imageUrl);
+		return embed;
+	},
+
+	projectHighlightEmbed(data: {
+		ownerId: string;
+		content: string;
+		stars: number;
+		imageUrl?: string;
+	}): Embed {
+		const header = `**Proyecto de <@${data.ownerId}>** · ⭐ ${data.stars}`;
+		const embed = new Embed()
+			.setDescription(
+				data.content ? `${header}\n\n${truncate(data.content, 3500)}` : header,
+			)
+			.setColor("Yellow")
+			.setTimestamp();
+		if (data.imageUrl) embed.setImage(data.imageUrl);
+		return embed;
 	},
 
 	forumPostDeletedEmbed(data: {
