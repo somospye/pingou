@@ -12,17 +12,19 @@ import {
 } from "@/utils/threadNotices";
 
 const CLOSED_PREFIX = "🔒 ";
+const STAFF_ROLES = [CONFIG.ROLES.ADMIN, CONFIG.ROLES.MODERATOR];
 
 type Ctx = ComponentContext<"Button">;
 
 /**
  * Cierre de hilos de ofertas y servicios en dos pasos, todo con
  * interacciones (no necesita intents privilegiados):
- * 1. "Cerrar" responde con una confirmación efímera. Si es un admin y no el
+ * 1. "Cerrar" responde con una confirmación efímera. Si es del staff y no el
  *    autor, le recuerda que debe tener un motivo.
  * 2. "Cerrar" de la confirmación avisa en el hilo, le agrega 🔒 al nombre,
  *    lo bloquea, lo archiva y deja registro en el canal de moderación.
- * Solo pueden cerrar el autor del post (su id viaja en el customId) o un admin.
+ * Solo pueden cerrar el autor del post (su id viaja en el customId) o el staff
+ * (admin o moderador).
  */
 export default class ThreadCloseButton extends ComponentCommand {
 	override componentType = "Button" as const;
@@ -48,17 +50,18 @@ export default class ThreadCloseButton extends ComponentCommand {
 		const notice = NOTICES[kind] ?? NOTICES.job;
 		const isConfirm = prefix === THREAD_CLOSE_CONFIRM_PREFIX;
 		const isAuthor = ctx.author.id === authorId;
-		const isAdmin = (ctx.member?.roles.keys ?? []).includes(CONFIG.ROLES.ADMIN);
+		const memberRoles = ctx.member?.roles.keys ?? [];
+		const isStaff = STAFF_ROLES.some((id) => memberRoles.includes(id));
 
 		const fail = (title: string, detail?: string) =>
 			isConfirm
 				? ctx.update(buildStatus(title, detail))
 				: ctx.write(buildStatus(title, detail, { ephemeral: true }));
 
-		if (!isAuthor && !isAdmin) {
+		if (!isAuthor && !isStaff) {
 			return fail(
 				"No puedes cerrar este hilo",
-				"Solo quien publicó o un admin pueden hacerlo.",
+				"Solo quien publicó o el staff pueden hacerlo.",
 			);
 		}
 
@@ -71,17 +74,17 @@ export default class ThreadCloseButton extends ComponentCommand {
 			return fail("Este hilo ya está cerrado");
 		}
 
-		// Si el autor es admin, cuenta como autor
-		const byAdmin = !isAuthor;
+		// Si el autor es del staff, cuenta como autor
+		const byStaff = !isAuthor;
 
 		if (!isConfirm) {
-			return ctx.write(buildCloseConfirm(kind, authorId, byAdmin));
+			return ctx.write(buildCloseConfirm(kind, authorId, byStaff));
 		}
 
 		await ctx.update(buildStatus("Hilo cerrado"));
 
-		const closedBy = byAdmin
-			? `un admin (<@${ctx.author.id}>)`
+		const closedBy = byStaff
+			? `el staff (<@${ctx.author.id}>)`
 			: `<@${ctx.author.id}>`;
 		await ctx.client.messages
 			.write(thread.id, {
@@ -103,7 +106,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 					archived: true,
 				},
 				{
-					reason: `Cerrado por ${ctx.author.username} (${byAdmin ? "admin" : "autor"})`,
+					reason: `Cerrado por ${ctx.author.username} (${byStaff ? "staff" : "autor"})`,
 				},
 			)
 			.catch((err) => console.error("Failed to close thread:", err));
@@ -117,7 +120,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 						threadName,
 						authorId,
 						closedById: ctx.author.id,
-						byAdmin,
+						byStaff,
 					}),
 				],
 			})

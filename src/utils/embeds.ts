@@ -345,11 +345,11 @@ export const Embeds = {
 		threadName: string;
 		authorId: string;
 		closedById: string;
-		byAdmin: boolean;
+		byStaff: boolean;
 	}): Embed {
 		return new Embed()
 			.setTitle(data.title)
-			.setColor(data.byAdmin ? "Orange" : "Grey")
+			.setColor(data.byStaff ? "Orange" : "Grey")
 			.addFields([
 				{
 					name: "Hilo",
@@ -363,7 +363,7 @@ export const Embeds = {
 				},
 				{
 					name: "Cerrado por",
-					value: `<@${data.closedById}> (${data.byAdmin ? "admin" : "autor"})`,
+					value: `<@${data.closedById}> (${data.byStaff ? "staff" : "autor"})`,
 					inline: true,
 				},
 			])

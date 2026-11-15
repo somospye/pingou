@@ -84,7 +84,7 @@ export const NOTICES: Record<
 		confirmDetail: "-# El hilo se bloqueará y nadie más podrá responder.",
 	},
 	project: {
-		color: 0x2ecc71,
+		color: 0x5865f2,
 		header: (authorId) =>
 			`## Proyecto no pago\nPublicado por <@${authorId}>. Si quieres sumarte, responde en este hilo o escríbele por MD.`,
 		body: [
@@ -155,18 +155,18 @@ export function buildThreadNotice(
 
 /**
  * Confirmación (efímera) antes de cerrar el hilo. Si quien cierra es un
- * admin y no el autor, le recuerda que debe tener un motivo, sin pedírselo.
+ * miembro del staff y no el autor, le recuerda que debe tener un motivo, sin pedírselo.
  */
 export function buildCloseConfirm(
 	kind: ThreadNoticeKind,
 	authorId: string,
-	byAdmin: boolean,
+	byStaff: boolean,
 ): MessageCreateBodyRequest {
 	const notice = NOTICES[kind];
 	const lines = [notice.confirmTitle];
-	if (byAdmin) {
+	if (byStaff) {
 		lines.push(
-			"-# Esta publicación no es tuya. Como admin, ciérrala solo si tienes un motivo, por ejemplo que incumpla las reglas. No hace falta que lo escribas, pero queda registrado quién la cerró.",
+			"-# Esta publicación no es tuya. Como staff, ciérrala solo si tienes un motivo, por ejemplo que incumpla las reglas. No hace falta que lo escribas, pero queda registrado quién la cerró.",
 		);
 	}
 	lines.push(notice.confirmDetail);
