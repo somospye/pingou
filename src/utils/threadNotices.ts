@@ -29,6 +29,7 @@ interface ThreadNoticeData {
 
 const STAFF_NOTE =
 	"-# El staff no interviene en tratos entre usuarios. Si tienes pruebas de una estafa, repórtala.";
+const CONFIRM_COLOR = 0x5865f2;
 
 export const NOTICES: Record<
 	ThreadNoticeKind,
@@ -38,8 +39,10 @@ export const NOTICES: Record<
 		body: string;
 		closeHint: string;
 		closeLabel: string;
+		reportLabel: string;
 		closedTitle: string;
-		confirmText: string;
+		confirmTitle: string;
+		confirmDetail: string;
 	}
 > = {
 	job: {
@@ -53,14 +56,16 @@ export const NOTICES: Record<
 			"- Acuerda el pago y los plazos por escrito.",
 			"- Si el trabajo es por proyecto, cobra por hitos.",
 		].join("\n"),
-		closeHint: "-# ¿Ya cubriste el puesto? Cierra la convocatoria.",
+		closeHint: "-# **¿Ya cubriste el puesto?** Cierra la convocatoria.",
 		closeLabel: "Cerrar convocatoria",
+		reportLabel: "Reportar Oferta",
 		closedTitle: "Convocatoria cerrada",
-		confirmText:
-			"¿Cerrar la convocatoria? El hilo se bloquea y nadie más podrá responder ni postularse.",
+		confirmTitle: "**¿Cerrar convocatoria?**",
+		confirmDetail:
+			"-# El hilo se bloqueará y nadie más podrá responder ni postularse.",
 	},
 	service: {
-		color: 0x57f287,
+		color: 0xf1c40f,
 		header: (authorId) =>
 			`## Servicio ofrecido\nPor <@${authorId}>. Pide un presupuesto en este hilo o escríbele por MD.`,
 		body: [
@@ -68,15 +73,15 @@ export const NOTICES: Record<
 			"- Pide ver trabajos anteriores.",
 			"- Acuerden el alcance, el precio y los plazos por escrito.",
 			"- Paguen por hitos, **nunca todo por adelantado**.",
-			"",
 			"### Si ofreces el servicio",
 			"- **No ejecutes** archivos ni repositorios que te mande un cliente sin revisarlos.",
 		].join("\n"),
-		closeHint: "-# ¿Ya no tomas trabajos? Cierra la publicación.",
+		closeHint: "-# **¿Ya no tomas trabajos?** Cierra la publicación.",
 		closeLabel: "Cerrar publicación",
+		reportLabel: "Reportar Servicio",
 		closedTitle: "Publicación cerrada",
-		confirmText:
-			"¿Cerrar la publicación? El hilo se bloquea y nadie más podrá responder.",
+		confirmTitle: "**¿Cerrar publicación?**",
+		confirmDetail: "-# El hilo se bloqueará y nadie más podrá responder.",
 	},
 };
 
@@ -102,14 +107,12 @@ export function buildThreadNotice(
 		new Button()
 			.setCustomId(`${THREAD_CLOSE_PREFIX}:${data.kind}:${data.authorId}`)
 			.setLabel(notice.closeLabel)
-			.setEmoji("🔒")
 			.setStyle(ButtonStyle.Danger),
 		new Button()
 			.setCustomId(
 				`${THREAD_REPORT_PREFIX}:${data.channelId}:${data.messageId}`,
 			)
-			.setLabel("Reportar")
-			.setEmoji("🚩")
+			.setLabel(notice.reportLabel)
 			.setStyle(ButtonStyle.Secondary),
 	]);
 
@@ -117,9 +120,9 @@ export function buildThreadNotice(
 		.setColor(notice.color)
 		.addComponents(
 			header,
-			new Separator().setDivider(true).setSpacing(Spacing.Large),
+			new Separator().setDivider(true).setSpacing(Spacing.Small),
 			new TextDisplay().setContent(notice.body),
-			new Separator().setDivider(true).setSpacing(Spacing.Large),
+			new Separator().setDivider(true).setSpacing(Spacing.Small),
 			new TextDisplay().setContent(`${notice.closeHint}\n${STAFF_NOTE}`),
 			buttons,
 		);
@@ -128,5 +131,55 @@ export function buildThreadNotice(
 		components: [container],
 		flags: MessageFlags.IsComponentsV2,
 		allowed_mentions: { users: [data.authorId] },
+	};
+}
+
+/**
+ * Confirmación (efímera) antes de cerrar el hilo. Si quien cierra es un
+ * admin y no el autor, le recuerda que debe tener un motivo, sin pedírselo.
+ */
+export function buildCloseConfirm(
+	kind: ThreadNoticeKind,
+	authorId: string,
+	byAdmin: boolean,
+): MessageCreateBodyRequest {
+	const notice = NOTICES[kind];
+	const lines = [notice.confirmTitle];
+	if (byAdmin) {
+		lines.push(
+			"-# Esta publicación no es tuya. Como admin, ciérrala solo si tienes un motivo, por ejemplo que incumpla las reglas. No hace falta que lo escribas, pero queda registrado quién la cerró.",
+		);
+	}
+	lines.push(notice.confirmDetail);
+
+	return {
+		components: [
+			new Container()
+				.setColor(CONFIRM_COLOR)
+				.addComponents(
+					new TextDisplay().setContent(lines.join("\n")),
+					new ActionRow<Button>().setComponents([
+						new Button()
+							.setCustomId(`${THREAD_CLOSE_CONFIRM_PREFIX}:${kind}:${authorId}`)
+							.setLabel("Cerrar")
+							.setStyle(ButtonStyle.Danger),
+						new Button()
+							.setCustomId(THREAD_CLOSE_CANCEL_ID)
+							.setLabel("Cancelar")
+							.setStyle(ButtonStyle.Secondary),
+					]),
+				),
+		],
+		flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+	};
+}
+
+/** Reemplaza la confirmación efímera por un texto final, sin botones. */
+export function buildCloseResult(text: string) {
+	return {
+		components: [
+			new Container().addComponents(new TextDisplay().setContent(text)),
+		],
+		flags: MessageFlags.IsComponentsV2,
 	};
 }

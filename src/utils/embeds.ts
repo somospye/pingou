@@ -339,6 +339,39 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	threadClosedEmbed(data: {
+		kind: "job" | "service";
+		threadId: string;
+		threadName: string;
+		authorId: string;
+		closedById: string;
+		byAdmin: boolean;
+	}): Embed {
+		return new Embed()
+			.setTitle(
+				data.kind === "job" ? "Convocatoria cerrada" : "Publicación cerrada",
+			)
+			.setColor(data.byAdmin ? "Orange" : "Grey")
+			.addFields([
+				{
+					name: "Hilo",
+					value: `<#${data.threadId}> (${data.threadName})`,
+					inline: false,
+				},
+				{
+					name: "Autor del post",
+					value: `<@${data.authorId}> (${data.authorId})`,
+					inline: true,
+				},
+				{
+					name: "Cerrado por",
+					value: `<@${data.closedById}> (${data.byAdmin ? "admin" : "autor"})`,
+					inline: true,
+				},
+			])
+			.setTimestamp();
+	},
+
 	modActionEmbed(data: {
 		caseId: number;
 		type: string;
