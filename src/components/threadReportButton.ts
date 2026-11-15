@@ -32,7 +32,9 @@ export default class ThreadReportButton extends ComponentCommand {
 					.setComponent(
 						new TextInput()
 							.setCustomId("motivo")
-							.setPlaceholder("¿Qué tiene de sospechoso esta publicación?")
+							.setPlaceholder(
+								"Ej: pide dinero por adelantado o no dice qué empresa es",
+							)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
 					),

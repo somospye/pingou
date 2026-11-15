@@ -26,52 +26,50 @@ interface ThreadNoticeData {
 }
 
 const STAFF_NOTE =
-	"-# El staff no puede intervenir en estafas ni resolver conflictos entre usuarios. Este canal está para dar visibilidad a las publicaciones, así que la precaución corre por tu cuenta. Si tienes pruebas de que alguien estafó, repórtalo y el staff puede quitarle el acceso a estos canales.";
+	"-# El staff no interviene en tratos entre usuarios. Si tienes pruebas de una estafa, repórtala.";
 
-const NOTICES: Record<
+export const NOTICES: Record<
 	ThreadNoticeKind,
 	{
 		color: number;
 		header: (authorId: string) => string;
-		body: string[];
+		body: string;
+		closeHint: string;
 		closeLabel: string;
+		closedTitle: string;
 	}
 > = {
 	job: {
 		color: 0x5865f2,
 		header: (authorId) =>
-			`## Hilo de la oferta\nOferta publicada por <@${authorId}>. Para postularte o preguntar detalles, responde en este hilo o escríbele por MD.`,
+			`## Oferta de empleo\nPublicada por <@${authorId}>. Postúlate en este hilo o escríbele por MD.`,
 		body: [
-			[
-				"### Antes de postularte",
-				"- Una oferta de trabajo real no te cobra por postularte, por la capacitación ni por el equipo. Si te piden dinero para empezar, es una estafa.",
-				"- No mandes tu documento de identidad ni tus datos bancarios hasta comprobar que la empresa existe.",
-				"- Si la publicación no dice qué empresa es, cuál es el puesto o cuánto pagan, desconfía. También puedes reportarla.",
-				"- Antes de empezar, acuerda por escrito el pago, los plazos y si los impuestos o comisiones van aparte.",
-				"- Si el trabajo es por proyecto, cobra por hitos: entregas pequeñas que muestren avances reales.",
-			].join("\n"),
-			"-# ¿Publicaste la oferta? Cuando cubras el puesto, toca **Cerrar convocatoria** para que dejen de postularse.",
-		],
+			"### Antes de postularte",
+			"- **Nunca pagues** para postularte ni para empezar a trabajar.",
+			"- No compartas documentos ni datos bancarios sin verificar la empresa.",
+			"- Acuerda el pago y los plazos por escrito.",
+			"- Si el trabajo es por proyecto, cobra por hitos.",
+		].join("\n"),
+		closeHint: "-# ¿Ya cubriste el puesto? Cierra la convocatoria.",
 		closeLabel: "Cerrar convocatoria",
+		closedTitle: "Convocatoria cerrada",
 	},
 	service: {
 		color: 0x57f287,
 		header: (authorId) =>
-			`## Hilo del servicio\nServicio ofrecido por <@${authorId}>. Si te interesa, pide un presupuesto en este hilo o escríbele por MD.`,
+			`## Servicio ofrecido\nPor <@${authorId}>. Pide un presupuesto en este hilo o escríbele por MD.`,
 		body: [
-			[
-				"### Antes de contratar",
-				"- Pide ver trabajos anteriores, como un portafolio o repositorios, antes de cerrar el trato.",
-				"- Acuerden por escrito qué incluye el trabajo, el precio, los plazos y si los impuestos o comisiones van aparte.",
-				"- Dividan el pago en hitos: entregas pequeñas que muestren avances reales. Ninguna de las partes debería pagar ni entregar todo hasta confiar en la otra.",
-			].join("\n"),
-			[
-				"### Si ofreces el servicio",
-				'- No ejecutes archivos ni repositorios que te mande un cliente para "probar" algo sin revisar antes el código. Así roban cuentas y tokens.',
-				"- Cuando no tomes más trabajos, toca **Cerrar publicación**.",
-			].join("\n"),
-		],
+			"### Si vas a contratar",
+			"- Pide ver trabajos anteriores.",
+			"- Acuerden el alcance, el precio y los plazos por escrito.",
+			"- Paguen por hitos, **nunca todo por adelantado**.",
+			"",
+			"### Si ofreces el servicio",
+			"- **No ejecutes** archivos ni repositorios que te mande un cliente sin revisarlos.",
+		].join("\n"),
+		closeHint: "-# ¿Ya no tomas trabajos? Cierra la publicación.",
 		closeLabel: "Cerrar publicación",
+		closedTitle: "Publicación cerrada",
 	},
 };
 
@@ -95,7 +93,7 @@ export function buildThreadNotice(
 
 	const buttons = new ActionRow<Button>().setComponents([
 		new Button()
-			.setCustomId(`${THREAD_CLOSE_PREFIX}:${data.authorId}`)
+			.setCustomId(`${THREAD_CLOSE_PREFIX}:${data.kind}:${data.authorId}`)
 			.setLabel(notice.closeLabel)
 			.setEmoji("🔒")
 			.setStyle(ButtonStyle.Danger),
@@ -103,7 +101,7 @@ export function buildThreadNotice(
 			.setCustomId(
 				`${THREAD_REPORT_PREFIX}:${data.channelId}:${data.messageId}`,
 			)
-			.setLabel("Reportar publicación")
+			.setLabel("Reportar")
 			.setEmoji("🚩")
 			.setStyle(ButtonStyle.Secondary),
 	]);
@@ -112,10 +110,10 @@ export function buildThreadNotice(
 		.setColor(notice.color)
 		.addComponents(
 			header,
-			new Separator().setDivider(true).setSpacing(Spacing.Small),
-			...notice.body.map((text) => new TextDisplay().setContent(text)),
-			new Separator().setDivider(true).setSpacing(Spacing.Small),
-			new TextDisplay().setContent(STAFF_NOTE),
+			new Separator().setDivider(true).setSpacing(Spacing.Large),
+			new TextDisplay().setContent(notice.body),
+			new Separator().setDivider(true).setSpacing(Spacing.Large),
+			new TextDisplay().setContent(`${notice.closeHint}\n${STAFF_NOTE}`),
 			buttons,
 		);
 

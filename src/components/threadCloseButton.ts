@@ -1,7 +1,11 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
-import { THREAD_CLOSE_PREFIX } from "@/utils/threadNotices";
+import {
+	NOTICES,
+	THREAD_CLOSE_PREFIX,
+	type ThreadNoticeKind,
+} from "@/utils/threadNotices";
 
 const CLOSED_PREFIX = "🔒 ";
 const STAFF_ROLES = [
@@ -11,9 +15,9 @@ const STAFF_ROLES = [
 ];
 
 /**
- * Cierra el hilo de una oferta o servicio: lo bloquea, le agrega 🔒 al
- * nombre y lo archiva. Solo puede usarlo el autor del post (su id viaja en
- * el customId) o el staff.
+ * Cierra el hilo de una oferta o servicio: avisa en el hilo, le agrega 🔒 al
+ * nombre, lo bloquea y lo archiva. Solo puede usarlo el autor del post (su
+ * id viaja en el customId) o el staff.
  */
 export default class ThreadCloseButton extends ComponentCommand {
 	override componentType = "Button" as const;
@@ -23,13 +27,18 @@ export default class ThreadCloseButton extends ComponentCommand {
 	}
 
 	override async run(ctx: ComponentContext<typeof this.componentType>) {
-		const authorId = ctx.customId.split(":")[1];
+		const [, kind, authorId] = ctx.customId.split(":") as [
+			string,
+			ThreadNoticeKind,
+			string,
+		];
+		const notice = NOTICES[kind] ?? NOTICES.job;
 		const memberRoles = ctx.member?.roles.keys ?? [];
 		const isStaff = STAFF_ROLES.some((id) => memberRoles.includes(id));
 
 		if (ctx.author.id !== authorId && !isStaff) {
 			return ctx.write({
-				content: "❌ Solo quien publicó puede cerrar este hilo.",
+				content: "Solo quien publicó o el staff pueden cerrar este hilo.",
 				flags: MessageFlags.Ephemeral,
 			});
 		}
@@ -47,7 +56,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 		}
 
 		await ctx.write({
-			content: `🔒 <@${ctx.author.id}> cerró esta publicación.`,
+			content: `🔒 **${notice.closedTitle}** por <@${ctx.author.id}>. El hilo ya no acepta respuestas.`,
 			allowed_mentions: { parse: [] },
 		});
 
