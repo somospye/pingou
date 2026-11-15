@@ -107,7 +107,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 			.write(CONFIG.CHANNELS.MOD_LOG, {
 				embeds: [
 					Embeds.threadClosedEmbed({
-						kind,
+						title: notice.closedTitle,
 						threadId: thread.id,
 						threadName,
 						authorId,

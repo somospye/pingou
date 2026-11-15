@@ -15,7 +15,7 @@ export const THREAD_CLOSE_CONFIRM_PREFIX = "thread-close-ok";
 export const THREAD_CLOSE_CANCEL_ID = "thread-close-no";
 export const THREAD_REPORT_PREFIX = "thread-report";
 
-export type ThreadNoticeKind = "job" | "service";
+export type ThreadNoticeKind = "job" | "service" | "project";
 
 interface ThreadNoticeData {
 	kind: ThreadNoticeKind;
@@ -82,6 +82,25 @@ export const NOTICES: Record<
 		closedTitle: "Publicación cerrada",
 		confirmTitle: "**¿Cerrar publicación?**",
 		confirmDetail: "-# El hilo se bloqueará y nadie más podrá responder.",
+	},
+	project: {
+		color: 0x2ecc71,
+		header: (authorId) =>
+			`## Proyecto no pago\nPublicado por <@${authorId}>. Si quieres sumarte, responde en este hilo o escríbele por MD.`,
+		body: [
+			"### Antes de sumarte",
+			"- Acuerden por escrito qué aporta cada uno y de quién es el código.",
+			"- Pide ver el repositorio o una demo antes de comprometerte.",
+			"- **Nunca pagues** para participar en un proyecto.",
+			"- **No ejecutes** archivos ni repositorios sin revisarlos.",
+		].join("\n"),
+		closeHint: "-# **¿Ya armaste el equipo?** Cierra la convocatoria.",
+		closeLabel: "Cerrar convocatoria",
+		reportLabel: "Reportar Proyecto",
+		closedTitle: "Convocatoria cerrada",
+		confirmTitle: "**¿Cerrar convocatoria?**",
+		confirmDetail:
+			"-# El hilo se bloqueará y nadie más podrá responder ni sumarse.",
 	},
 };
 

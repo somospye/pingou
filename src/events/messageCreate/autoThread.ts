@@ -11,6 +11,7 @@ const NOTICE_CHANNELS: Record<
 > = {
 	[CONFIG.CHANNELS.JOBS_OFFERS]: { kind: "job", suffix: "Empleo" },
 	[CONFIG.CHANNELS.SERVICES_OFFERS]: { kind: "service", suffix: "Servicio" },
+	[CONFIG.CHANNELS.UNPAID_PROJECTS]: { kind: "project", suffix: "Proyecto" },
 };
 
 /**

@@ -340,7 +340,7 @@ export const Embeds = {
 	},
 
 	threadClosedEmbed(data: {
-		kind: "job" | "service";
+		title: string;
 		threadId: string;
 		threadName: string;
 		authorId: string;
@@ -348,9 +348,7 @@ export const Embeds = {
 		byAdmin: boolean;
 	}): Embed {
 		return new Embed()
-			.setTitle(
-				data.kind === "job" ? "Convocatoria cerrada" : "Publicación cerrada",
-			)
+			.setTitle(data.title)
 			.setColor(data.byAdmin ? "Orange" : "Grey")
 			.addFields([
 				{
