@@ -166,7 +166,7 @@ export function buildCloseConfirm(
 	const lines = [notice.confirmTitle];
 	if (byStaff) {
 		lines.push(
-			"-# Esta publicación no es tuya. Como staff, ciérrala solo si tienes un motivo, por ejemplo que incumpla las reglas. No hace falta que lo escribas, pero queda registrado quién la cerró.",
+			"-# No es tu publicación. Ciérrala solo si tienes un motivo. No hace falta escribirlo, pero queda registrado quién la cerró.",
 		);
 	}
 	lines.push(notice.confirmDetail);

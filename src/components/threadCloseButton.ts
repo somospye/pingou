@@ -90,7 +90,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 			.write(thread.id, {
 				...buildStatus(
 					`🔒 ${notice.closedTitle}`,
-					`Cerrada por ${closedBy}. El hilo ya no acepta respuestas.`,
+					`La cerró ${closedBy}. Ya no se puede responder.`,
 				),
 				allowed_mentions: { parse: [] },
 			})
