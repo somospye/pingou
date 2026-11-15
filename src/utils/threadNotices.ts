@@ -11,6 +11,8 @@ import type { MessageCreateBodyRequest } from "seyfert/lib/common";
 import { ButtonStyle, MessageFlags, Spacing } from "seyfert/lib/types";
 
 export const THREAD_CLOSE_PREFIX = "thread-close";
+export const THREAD_CLOSE_CONFIRM_PREFIX = "thread-close-ok";
+export const THREAD_CLOSE_CANCEL_ID = "thread-close-no";
 export const THREAD_REPORT_PREFIX = "thread-report";
 
 export type ThreadNoticeKind = "job" | "service";
@@ -37,6 +39,7 @@ export const NOTICES: Record<
 		closeHint: string;
 		closeLabel: string;
 		closedTitle: string;
+		confirmText: string;
 	}
 > = {
 	job: {
@@ -53,6 +56,8 @@ export const NOTICES: Record<
 		closeHint: "-# ¿Ya cubriste el puesto? Cierra la convocatoria.",
 		closeLabel: "Cerrar convocatoria",
 		closedTitle: "Convocatoria cerrada",
+		confirmText:
+			"¿Cerrar la convocatoria? El hilo se bloquea y nadie más podrá responder ni postularse.",
 	},
 	service: {
 		color: 0x57f287,
@@ -70,6 +75,8 @@ export const NOTICES: Record<
 		closeHint: "-# ¿Ya no tomas trabajos? Cierra la publicación.",
 		closeLabel: "Cerrar publicación",
 		closedTitle: "Publicación cerrada",
+		confirmText:
+			"¿Cerrar la publicación? El hilo se bloquea y nadie más podrá responder.",
 	},
 };
 
