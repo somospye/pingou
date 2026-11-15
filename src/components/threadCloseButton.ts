@@ -1,10 +1,9 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
-import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 import { Embeds } from "@/utils/embeds";
 import {
 	buildCloseConfirm,
-	buildCloseResult,
+	buildStatus,
 	NOTICES,
 	THREAD_CLOSE_CANCEL_ID,
 	THREAD_CLOSE_CONFIRM_PREFIX,
@@ -38,7 +37,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 
 	override async run(ctx: Ctx) {
 		if (ctx.customId === THREAD_CLOSE_CANCEL_ID) {
-			return ctx.update(buildCloseResult("Cancelado. El hilo sigue abierto."));
+			return ctx.update(buildStatus("Cancelado", "El hilo sigue abierto."));
 		}
 
 		const [prefix, kind, authorId] = ctx.customId.split(":") as [
@@ -51,13 +50,16 @@ export default class ThreadCloseButton extends ComponentCommand {
 		const isAuthor = ctx.author.id === authorId;
 		const isAdmin = (ctx.member?.roles.keys ?? []).includes(CONFIG.ROLES.ADMIN);
 
-		const fail = (text: string) =>
+		const fail = (title: string, detail?: string) =>
 			isConfirm
-				? ctx.update(buildCloseResult(text))
-				: ctx.write({ content: text, flags: MessageFlags.Ephemeral });
+				? ctx.update(buildStatus(title, detail))
+				: ctx.write(buildStatus(title, detail, { ephemeral: true }));
 
 		if (!isAuthor && !isAdmin) {
-			return fail("Solo quien publicó o un admin pueden cerrar este hilo.");
+			return fail(
+				"No puedes cerrar este hilo",
+				"Solo quien publicó o un admin pueden hacerlo.",
+			);
 		}
 
 		const thread = await ctx.client.channels
@@ -66,7 +68,7 @@ export default class ThreadCloseButton extends ComponentCommand {
 		if (!thread?.isThread()) return;
 
 		if (thread.name.startsWith(CLOSED_PREFIX)) {
-			return fail("Este hilo ya está cerrado.");
+			return fail("Este hilo ya está cerrado");
 		}
 
 		// Si el autor es admin, cuenta como autor
@@ -76,14 +78,17 @@ export default class ThreadCloseButton extends ComponentCommand {
 			return ctx.write(buildCloseConfirm(kind, authorId, byAdmin));
 		}
 
-		await ctx.update(buildCloseResult("Hilo cerrado."));
+		await ctx.update(buildStatus("Hilo cerrado"));
 
 		const closedBy = byAdmin
 			? `un admin (<@${ctx.author.id}>)`
 			: `<@${ctx.author.id}>`;
 		await ctx.client.messages
 			.write(thread.id, {
-				content: `🔒 **${notice.closedTitle}** por ${closedBy}. El hilo ya no acepta respuestas.`,
+				...buildStatus(
+					`🔒 ${notice.closedTitle}`,
+					`Cerrada por ${closedBy}. El hilo ya no acepta respuestas.`,
+				),
 				allowed_mentions: { parse: [] },
 			})
 			.catch((err) => console.error("Failed to send close notice:", err));

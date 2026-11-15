@@ -2,6 +2,7 @@ import { ModalCommand, type ModalContext } from "seyfert";
 import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 import { type ReportData, reportService } from "@/services/reportService";
+import { buildStatus } from "@/utils/threadNotices";
 
 export default class ReportModal extends ModalCommand {
 	override filter(ctx: ModalContext) {
@@ -56,9 +57,10 @@ export default class ReportModal extends ModalCommand {
 
 		await reportService.sendReport(ctx.client, data);
 
-		return ctx.write({
-			content: "Tu reporte fue enviado al staff. Gracias.",
-			flags: MessageFlags.Ephemeral,
-		});
+		return ctx.write(
+			buildStatus("Reporte enviado", "Gracias, el staff lo va a revisar.", {
+				ephemeral: true,
+			}),
+		);
 	}
 }

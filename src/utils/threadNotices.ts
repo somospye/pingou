@@ -193,12 +193,24 @@ export function buildCloseConfirm(
 	};
 }
 
-/** Reemplaza la confirmación efímera por un texto final, sin botones. */
-export function buildCloseResult(text: string) {
+/**
+ * Mensaje de estado corto (Components V2): título en negrita y, si hace
+ * falta, un detalle en letra chica. Se usa para las respuestas del cierre.
+ */
+export function buildStatus(
+	title: string,
+	detail?: string,
+	options: { ephemeral?: boolean } = {},
+) {
+	const text = detail ? `**${title}**\n-# ${detail}` : `**${title}**`;
 	return {
 		components: [
-			new Container().addComponents(new TextDisplay().setContent(text)),
+			new Container()
+				.setColor(CONFIRM_COLOR)
+				.addComponents(new TextDisplay().setContent(text)),
 		],
-		flags: MessageFlags.IsComponentsV2,
+		flags: options.ephemeral
+			? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+			: MessageFlags.IsComponentsV2,
 	};
 }
