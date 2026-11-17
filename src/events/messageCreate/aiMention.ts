@@ -8,10 +8,12 @@ import {
 } from "seyfert";
 import { type APIEmbed, ButtonStyle } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
-import { aiService } from "@/services/ai";
+import { type AskContext, aiService } from "@/services/ai";
+import { aiHistoryService } from "@/services/aiHistoryService";
 import { aiSourcesStore } from "@/services/aiSources";
 import { cooldownService } from "@/services/cooldown";
 import { webResearchService } from "@/services/webResearch";
+import { loadAttachments } from "@/utils/aiAttachments";
 import { Embeds } from "@/utils/embeds";
 
 /**
@@ -80,10 +82,12 @@ export async function handleAiMention(
 		contextLimit = Math.min(Number.parseInt(match[1], 10), 10);
 	}
 
+	const hasAttachments = message.attachments.length > 0;
+
 	// Mostramos "Procesando..." inmediatamente para preguntas con contenido,
 	// así el usuario sabe que el bot está trabajando mientras clasifica.
 	const statusMsg =
-		cleanContent.length > 0
+		cleanContent.length > 0 || hasAttachments
 			? await message.reply({
 					embeds: [
 						new Embed().setDescription("💭 Procesando...").setColor("Blue"),
@@ -110,7 +114,7 @@ export async function handleAiMention(
 			contextLimit + 1,
 			message.author.id,
 		);
-		if (!prevMessages.length) return true;
+		if (!prevMessages.length && !hasAttachments) return true;
 		promptMessages = [...prevMessages]
 			.reverse()
 			.map((m) => `${m.author.username}: ${m.content ?? ""}`);
@@ -138,9 +142,31 @@ export async function handleAiMention(
 	let text: string;
 	let usage: Awaited<ReturnType<typeof aiService.synthesizeAnswer>>["usage"];
 
-	if (shouldResearch) {
+	// Historial con el usuario y mensaje al que responde, si lo hay
+	const context: AskContext = {
+		history: await aiHistoryService.getContext(userId).catch((err) => {
+			console.error("Error loading AI history:", err);
+			return [];
+		}),
+		replyTo: getReplyContext(message, client.me.id),
+	};
+
+	const loaded = hasAttachments ? await loadAttachments(message) : null;
+
+	if (loaded && (loaded.images.length || loaded.files.length)) {
+		// Con adjuntos vamos directo al modelo potente, sin planner
+		await onProgress?.("📎 Leyendo adjuntos...");
+		const result = await aiService.answerWithAttachments(
+			cleanContent,
+			loaded,
+			context,
+		);
+		text = result.text;
+		usage = result.usage;
+	} else if (shouldResearch) {
 		await onProgress?.("🤔 Pensando...");
-		const plan = await aiService.planResponse(cleanContent);
+		const plan = await aiService.planResponse(cleanContent, context);
+		const tier = plan.complex ? "COMPLEX" : "FAST";
 
 		if (plan.needsResearch && plan.queries.length) {
 			const slot = await cooldownService
@@ -164,6 +190,8 @@ export async function handleAiMention(
 					const synth = await aiService.synthesizeAnswer(
 						cleanContent,
 						webResult.sources,
+						tier,
+						context,
 					);
 					text = synth.text;
 					usage = synth.usage;
@@ -177,6 +205,18 @@ export async function handleAiMention(
 				);
 				text = plan.answer;
 			}
+		} else if (plan.complex) {
+			// El modelo rápido marcó la pregunta como complicada: la responde
+			// un modelo potente
+			await onProgress?.("🧠 Pensando con un modelo más potente...");
+			const chatResult = await aiService.chat(
+				promptMessages,
+				undefined,
+				"COMPLEX",
+				context,
+			);
+			text = chatResult.text;
+			usage = chatResult.usage;
 		} else {
 			// El modelo decidió que no hace falta research, usamos su answer directo
 			text = plan.answer;
@@ -184,10 +224,24 @@ export async function handleAiMention(
 	} else {
 		// Camino sin research por config / contenido muy corto / mención sin texto
 		// (vamos al chat clásico con history de mensajes previos)
-		const chatResult = await aiService.chat(promptMessages);
+		const chatResult = await aiService.chat(
+			promptMessages,
+			undefined,
+			"FAST",
+			context,
+		);
 		text = chatResult.text;
 		usage = chatResult.usage;
 	}
+
+	if (loaded?.skipped.length) {
+		text += `\n\n-# No pude leer: ${loaded.skipped.join(", ")}`;
+	}
+
+	const question = cleanContent || "(adjuntos)";
+	await aiHistoryService
+		.record(userId, question, text)
+		.catch((err) => console.error("Error saving AI history:", err));
 
 	await cooldownService
 		.setCooldown(userId, cooldownKey, 15)
@@ -243,4 +297,33 @@ export async function handleAiMention(
 	}
 
 	return true;
+}
+
+/**
+ * Texto del mensaje al que responde el usuario, si se puede leer. Sin el
+ * intent de Message Content, Discord solo da el contenido de mensajes del
+ * propio bot (texto o embeds); para los de otros usuarios llega vacío y se
+ * ignora.
+ */
+function getReplyContext(
+	message: Message,
+	botId: string,
+): AskContext["replyTo"] {
+	const ref = message.referencedMessage;
+	if (!ref) return undefined;
+
+	const embedText =
+		ref.author.id === botId
+			? (ref.embeds ?? [])
+					.map((e) => e.description ?? "")
+					.filter(Boolean)
+					.join("\n")
+			: "";
+	const content = (ref.content || embedText).trim();
+	if (!content) return undefined;
+
+	return {
+		author: ref.author.id === botId ? "Pingou" : ref.author.username,
+		content: content.slice(0, 1_500),
+	};
 }

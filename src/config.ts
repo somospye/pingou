@@ -116,6 +116,42 @@ export const CONFIG = {
 		// modelo (sin DDG/Jina), sin tocar el rate limit de research.
 		RESEARCH_ENABLED: true as boolean,
 
+		// Modelos de NVIDIA NIM en orden de preferencia: si uno falla, tarda
+		// demasiado o responde vacío, se prueba el siguiente. FAST se usa para
+		// las preguntas comunes y COMPLEX cuando el planner marca la pregunta
+		// como complicada. `extra` se agrega tal cual al body de la request.
+		// Catálogo: https://build.nvidia.com/models
+		MODELS: {
+			FAST: [
+				{
+					id: "nvidia/nemotron-3.5-lightning-30b-a3b",
+					// Sin razonamiento previo para que responda rápido
+					extra: { chat_template_kwargs: { enable_thinking: false } },
+				},
+				{ id: "nvidia/nemotron-3.5-bolt-e4b" },
+			],
+			COMPLEX: [
+				{ id: "mistralai/mistral-large-4-1t-a52b" },
+				{ id: "nvidia/nemotron-3-ultra-550b-a55b" },
+			],
+			// Preguntas con imágenes adjuntas: solo modelos que aceptan imágenes.
+			// Si fallan, se responde con COMPLEX sin las imágenes.
+			VISION: [{ id: "mistralai/mistral-large-4-1t-a52b" }],
+		} as Record<
+			"FAST" | "COMPLEX" | "VISION",
+			ReadonlyArray<{ id: string; extra?: Record<string, unknown> }>
+		>,
+		// Tiempo máximo por modelo antes de pasar al siguiente
+		TIMEOUT_MS: { FAST: 20_000, COMPLEX: 60_000, VISION: 60_000 },
+
+		// Historial de conversación por usuario: últimos mensajes con Pingou
+		// que se le pasan al modelo como contexto. Se borra solo pasado
+		// MAX_AGE_DAYS y cada usuario puede borrarlo con /olvidar.
+		HISTORY: { MAX_MESSAGES: 10, MAX_AGE_DAYS: 7 },
+
+		// Adjuntos de texto (código, logs) que se leen e incluyen en la pregunta
+		ATTACHMENTS: { MAX_TEXT_BYTES: 100_000, MAX_TEXT_CHARS: 8_000 },
+
 		// Score por reputación de dominio para rankear URLs candidatas del
 		// SERP cuando hacemos research web. Las entradas se evalúan en orden:
 		// CADA regex que matchea suma su score al total (los puntos acumulan).
