@@ -6,6 +6,7 @@ import {
 } from "seyfert";
 import { ButtonStyle } from "seyfert/lib/types";
 import { aiService } from "@/services/ai";
+import { estimateComplexity } from "@/utils/aiComplexity";
 import { cleanAiText, splitForDiscord, startTyping } from "@/utils/aiReply";
 
 export const FORUM_AI_BUTTON_ID = "foro-respuesta-ia";
@@ -59,11 +60,14 @@ export default class AIReplyButton extends ComponentCommand {
 
 			const question = [`Título del post: ${title}`, ...readable].join("\n");
 			const plan = await aiService.planResponse(question);
-			const text = plan.complex
+			const estimated = estimateComplexity(question);
+			const complex =
+				estimated === "complex" || (estimated !== "simple" && plan.complex);
+			const text = complex
 				? (await aiService.chat([question], undefined, "COMPLEX")).text
 				: plan.answer;
 
-			stopTyping();
+			await stopTyping();
 			for (const [i, chunk] of splitForDiscord(cleanAiText(text)).entries()) {
 				await ctx.client.messages.write(threadId, {
 					content: chunk,
@@ -80,7 +84,7 @@ export default class AIReplyButton extends ComponentCommand {
 			}
 		} catch (error) {
 			console.error("Error in AI reply button:", error);
-			stopTyping();
+			await stopTyping();
 			await ctx.client.messages
 				.write(threadId, {
 					content:

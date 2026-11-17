@@ -4,17 +4,30 @@ const DISCORD_MAX_LENGTH = 2000;
 // Discord muestra "escribiendo..." unos 10 segundos o hasta que el bot manda
 // un mensaje, así que lo renovamos antes de que se apague.
 const TYPING_INTERVAL_MS = 8_000;
+const TYPING_MAX_MS = 2 * 60_000;
 
 /**
  * Muestra "Pingou está escribiendo..." en el canal hasta que se llame a la
- * función devuelta. El indicador también se quita solo cuando el bot envía
- * un mensaje.
+ * función devuelta. Discord quita el indicador cuando el bot envía un
+ * mensaje, pero si un aviso de "escribiendo" llega después del mensaje lo
+ * vuelve a mostrar unos 10 segundos. Por eso la función de corte espera a
+ * que termine el último aviso en vuelo: hay que hacer `await stop()` antes
+ * de mandar la respuesta.
  */
 export function startTyping(client: UsingClient, channelId: string) {
-	const send = () => client.channels.typing(channelId).catch(() => {});
+	let pending: Promise<void> = Promise.resolve();
+	const send = () => {
+		pending = client.channels.typing(channelId).catch(() => {});
+	};
 	send();
 	const timer = setInterval(send, TYPING_INTERVAL_MS);
-	return () => clearInterval(timer);
+	// Tope por si un error corta el flujo antes de llamar a stop()
+	const safety = setTimeout(() => clearInterval(timer), TYPING_MAX_MS);
+	return async () => {
+		clearInterval(timer);
+		clearTimeout(safety);
+		await pending;
+	};
 }
 
 /**

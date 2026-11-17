@@ -8,6 +8,7 @@ import { aiSourcesStore } from "@/services/aiSources";
 import { cooldownService } from "@/services/cooldown";
 import { webResearchService } from "@/services/webResearch";
 import { loadAttachments } from "@/utils/aiAttachments";
+import { estimateComplexity } from "@/utils/aiComplexity";
 import {
 	cleanAiText,
 	splitForDiscord,
@@ -70,7 +71,7 @@ export async function handleAiMention(
 		// esperamos a que termine el cooldown antes de llamar a la API
 		const stopWaitTyping = startTyping(client, message.channelId);
 		await new Promise((resolve) => setTimeout(resolve, remainingMs));
-		stopWaitTyping();
+		await stopWaitTyping();
 	}
 
 	// Extraemos el contenido limpio quitando el mention al bot
@@ -110,7 +111,7 @@ export async function handleAiMention(
 			message.author.id,
 		);
 		if (!prevMessages.length && !hasAttachments) {
-			stopTyping();
+			await stopTyping();
 			return true;
 		}
 		promptMessages = [...prevMessages]
@@ -147,7 +148,14 @@ export async function handleAiMention(
 		text = result.text;
 	} else if (shouldResearch) {
 		const plan = await aiService.planResponse(cleanContent, context);
-		const tier = plan.complex ? "COMPLEX" : "FAST";
+		// Las reglas deciden cuando el caso es claro; si no, decide el planner
+		const estimated = estimateComplexity(cleanContent);
+		const complex =
+			estimated === "complex" || (estimated !== "simple" && plan.complex);
+		const tier = complex ? "COMPLEX" : "FAST";
+		console.info(
+			`[ai] complejidad: reglas=${estimated ?? "dudosa"} planner=${plan.complex ? "complex" : "simple"} -> ${tier}`,
+		);
 
 		if (plan.needsResearch && plan.queries.length) {
 			const slot = await cooldownService
@@ -180,8 +188,8 @@ export async function handleAiMention(
 			} else {
 				text = plan.answer;
 			}
-		} else if (plan.complex) {
-			// El modelo rápido marcó la pregunta como complicada: la responde
+		} else if (complex) {
+			// Pregunta complicada (por reglas o por el planner): la responde
 			// un modelo potente
 			const chatResult = await aiService.chat(
 				promptMessages,
@@ -227,12 +235,15 @@ export async function handleAiMention(
 		withSingleSource(cleanAiText(text), webResult?.sourceUrls),
 	);
 
-	stopTyping();
+	await stopTyping();
 	for (const [i, chunk] of chunks.entries()) {
 		const isLast = i === chunks.length - 1;
 		await message
 			.reply({
 				content: chunk,
+				// Solo el primer mensaje menciona al usuario en el reply: así se
+				// resalta y le llega una sola notificación aunque se parta
+				allowed_mentions: { parse: [], replied_user: i === 0 },
 				...(isLast && sourcesRow ? { components: [sourcesRow] } : {}),
 			})
 			.catch((err) => console.error("Error sending AI reply:", err));
