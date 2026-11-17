@@ -393,7 +393,8 @@ export class AIService {
 
 	/**
 	 * MEGA-CALL #2: dado una pregunta y las fuentes scrapeadas en crudo
-	 * (markdown), produce el answer final con citas [N] inline. El modelo
+	 * (markdown), produce el answer final. Las fuentes no se citan en el
+	 * texto: se muestran aparte (botón "Ver fuentes" o link al final). El modelo
 	 * hace internamente la filtración de noise (nav/ads/footers), el match
 	 * de info relevante y la síntesis.
 	 *
@@ -431,7 +432,7 @@ export class AIService {
 						content: `${BOT_PROMPT}
 
 En el siguiente mensaje recibes páginas web numeradas (texto crudo) para responder la pregunta. Además de las reglas de arriba:
-- Cita con [N] al final de la oración lo que saques de una fuente; usa [1][2] si combinas varias.
+- No cites las fuentes en el texto (nada de [1], [2] ni links a las fuentes): se muestran aparte.
 - Si algo no sale de las fuentes, agrégale "(según lo que sé)".
 - Si las fuentes permiten recomendar algo concreto, recomiéndalo.
 - Si las fuentes se contradicen, dilo.
@@ -472,19 +473,16 @@ En el siguiente mensaje recibes páginas web numeradas (texto crudo) para respon
 		}
 
 		try {
-			// Cuando hay contexto web lo inyectamos como un turno previo y le
-			// agregamos un "writer prompt" estilo Perplexica que obliga al modelo
-			// a citar con [N] inline y a ser explícito cuando las fuentes no
-			// alcanzan. Las fuentes vienen ya numeradas desde webResearch.ts
-			// como "Fuente 1: URL ...", así que el modelo solo tiene que usar
-			// el mismo número entre corchetes.
+			// Cuando hay contexto web lo inyectamos como un turno previo, con
+			// instrucciones para usarlo sin citar las fuentes en el texto y
+			// marcando lo que no salga de ellas.
 			const contextMessages: OpenAI.ChatCompletionMessageParam[] = webContext
 				? [
 						{
 							role: "user" as const,
 							content: `${webContext}
 
-Usa el contexto de arriba para responder. Cita con [N] lo que saques de una fuente, agrégale "(según lo que sé)" a lo que no salga de ahí, recomienda algo concreto si las fuentes lo permiten y avisa si se contradicen.`,
+Usa el contexto de arriba para responder. No cites las fuentes en el texto (nada de [1] ni links a ellas), agrégale "(según lo que sé)" a lo que no salga de ahí, recomienda algo concreto si las fuentes lo permiten y avisa si se contradicen.`,
 						},
 						{
 							role: "assistant" as const,
