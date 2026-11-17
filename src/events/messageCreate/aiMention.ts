@@ -17,8 +17,8 @@ import {
 /**
  * Construye un ActionRow con el botón "📚 Ver fuentes (N)" cuando hay 2+
  * fuentes. Guarda las URLs en el store en memoria con TTL y embebe el key
- * en el customId. Con 1 sola fuente devuelve undefined porque el footer
- * del embed ya muestra la URL directa.
+ * en el customId. Con 1 sola fuente devuelve undefined porque la URL ya va
+ * al final del texto.
  */
 function buildSourcesRow(
 	sourceUrls: string[] | undefined,
@@ -33,6 +33,9 @@ function buildSourcesRow(
 			.setStyle(ButtonStyle.Secondary),
 	]);
 }
+
+// Con menos de esto de cooldown restante no se avisa: se espera escribiendo
+const SHORT_WAIT_MS = 4_000;
 
 /**
  * Maneja menciones al bot (@Pingou ...) con respuesta de IA, investigación
@@ -53,15 +56,20 @@ export async function handleAiMention(
 		cooldownKey,
 	);
 	if (currentCooldown) {
-		const remaining = Math.ceil(
-			(currentCooldown.expiresAt.getTime() - Date.now()) / 1000,
-		);
-		await message
-			.reply({
-				content: `Calma, estás saturando la IA. Espera **${remaining} segundos**.`,
-			})
-			.catch((err) => console.error("Error sending cooldown notice:", err));
-		return true;
+		const remainingMs = currentCooldown.expiresAt.getTime() - Date.now();
+		if (remainingMs >= SHORT_WAIT_MS) {
+			await message
+				.reply({
+					content: `<:thonk:887124153445023765> Dejame pensar, espera **${Math.ceil(remainingMs / 1000)} segundos**`,
+				})
+				.catch((err) => console.error("Error sending cooldown notice:", err));
+			return true;
+		}
+		// Si falta poco, en vez de avisar mostramos "escribiendo..." y
+		// esperamos a que termine el cooldown antes de llamar a la API
+		const stopWaitTyping = startTyping(client, message.channelId);
+		await new Promise((resolve) => setTimeout(resolve, remainingMs));
+		stopWaitTyping();
 	}
 
 	// Extraemos el contenido limpio quitando el mention al bot
