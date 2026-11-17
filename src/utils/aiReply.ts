@@ -58,6 +58,28 @@ export function splitForDiscord(
 	return chunks;
 }
 
+/**
+ * Limpia una respuesta de la IA antes de mandarla, sin tocar el código:
+ * quita citas tipo [1] o [1][2] y envuelve los links en <> para que
+ * Discord no genere vistas previas (también los de [texto](url)).
+ */
+export function cleanAiText(text: string): string {
+	return text
+		.split(/(```[\s\S]*?```|`[^`\n]*`)/)
+		.map((part, i) => {
+			// Las partes impares son bloques o fragmentos de código
+			if (i % 2 === 1) return part;
+			return part
+				.replace(/ ?\[\d+\](?:\[\d+\])*(?!\()/g, "")
+				.replace(/\]\((https?:\/\/[^\s)>]+)\)/g, "](<$1>)")
+				.replace(
+					/(^|[^<(\w])(https?:\/\/[^\s<>()]+?)([.,;:!?]*)(?=\s|$)/gm,
+					"$1<$2>$3",
+				);
+		})
+		.join("");
+}
+
 /** Agrega la fuente al final cuando la respuesta usó una sola página. */
 export function withSingleSource(text: string, sourceUrls?: string[]): string {
 	if (sourceUrls?.length !== 1) return text;

@@ -9,6 +9,7 @@ import { cooldownService } from "@/services/cooldown";
 import { webResearchService } from "@/services/webResearch";
 import { loadAttachments } from "@/utils/aiAttachments";
 import {
+	cleanAiText,
 	splitForDiscord,
 	startTyping,
 	withSingleSource,
@@ -164,7 +165,7 @@ export async function handleAiMention(
 
 				if (webResult?.sources.length) {
 					// MEGA-CALL #2: synthesize con fuentes crudas. Hace
-					// filtración + extracción + síntesis + citas en 1 call.
+					// filtración + extracción + síntesis en 1 call.
 					const synth = await aiService.synthesizeAnswer(
 						cleanContent,
 						webResult.sources,
@@ -222,7 +223,9 @@ export async function handleAiMention(
 	// del texto). Va en el ÚLTIMO mensaje para que el usuario lo encuentre al
 	// terminar de leer la respuesta.
 	const sourcesRow = buildSourcesRow(webResult?.sourceUrls);
-	const chunks = splitForDiscord(withSingleSource(text, webResult?.sourceUrls));
+	const chunks = splitForDiscord(
+		withSingleSource(cleanAiText(text), webResult?.sourceUrls),
+	);
 
 	stopTyping();
 	for (const [i, chunk] of chunks.entries()) {

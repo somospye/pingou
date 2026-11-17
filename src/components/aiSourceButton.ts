@@ -30,7 +30,8 @@ export default class AISourceButton extends ComponentCommand {
 			});
 		}
 
-		const list = urls.map((u, i) => `${i + 1}. ${u}`).join("\n");
+		// Los <> evitan que Discord genere la vista previa de cada link
+		const list = urls.map((u, i) => `${i + 1}. <${u}>`).join("\n");
 		return ctx.write({
 			content: `**Fuentes consultadas:**\n${list}`,
 			flags: MessageFlags.Ephemeral,

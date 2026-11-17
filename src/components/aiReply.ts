@@ -6,7 +6,7 @@ import {
 } from "seyfert";
 import { ButtonStyle } from "seyfert/lib/types";
 import { aiService } from "@/services/ai";
-import { splitForDiscord, startTyping } from "@/utils/aiReply";
+import { cleanAiText, splitForDiscord, startTyping } from "@/utils/aiReply";
 
 export const FORUM_AI_BUTTON_ID = "foro-respuesta-ia";
 
@@ -64,7 +64,7 @@ export default class AIReplyButton extends ComponentCommand {
 				: plan.answer;
 
 			stopTyping();
-			for (const [i, chunk] of splitForDiscord(text).entries()) {
+			for (const [i, chunk] of splitForDiscord(cleanAiText(text)).entries()) {
 				await ctx.client.messages.write(threadId, {
 					content: chunk,
 					// El mensaje inicial de un post comparte id con el hilo
