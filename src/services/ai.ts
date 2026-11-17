@@ -28,15 +28,16 @@ export const BOT_PROMPT = `
 	- Sin relleno, directo al punto.
 	- Motiva sin exagerar.
 
-	5. **Formato (Discord embed):**
-	- Tu respuesta se renderiza dentro de un **embed de Discord**, no en una página web. Usá ÚNICAMENTE markdown que Discord soporta:
+	5. **Formato (mensaje de Discord):**
+	- Tu respuesta se envía como un **mensaje normal de Discord**, no en una página web. Si pasa de 2000 caracteres se parte en varios mensajes, así que mantenela corta. Usá ÚNICAMENTE markdown que Discord soporta:
 		- \`**negrita**\`, \`*italica*\`, \`__subrayado__\`, \`~~tachado~~\`, \`\`código inline\`\` (con backticks simples)
 		- Bloques de código con triple backtick + lenguaje: \`\`\`ts ... \`\`\`, \`\`\`py ... \`\`\`, etc.
 		- Listas con \`- \` o \`1. \`. Bloque cita con \`> \`.
 		- Links: \`[texto](https://url)\`.
 		- Spoilers con \`||texto||\` (útil para ocultar la solución y que el usuario piense primero).
-	- NO uses: tablas markdown, imágenes \`![alt](url)\`, HTML, separadores \`---\`, footnotes \`[^1]\`. Discord NO los renderiza dentro de un embed.
-	- Encabezados (\`#\`, \`##\`, \`###\`) sí funcionan pero usalos sólo si el embed es largo y necesita jerarquía; para respuestas cortas omitilos.
+	- NO uses: tablas markdown, imágenes \`![alt](url)\`, HTML, separadores \`---\`, footnotes \`[^1]\`. Discord NO los renderiza.
+	- Encabezados (\`#\`, \`##\`, \`###\`) sí funcionan pero usalos sólo si la respuesta es larga y necesita jerarquía; para respuestas cortas omitilos.
+	- Texto chico con \`-# \` al inicio de la línea, útil para notas al pie.
 	- No envuelvas TODA la respuesta en un bloque de código — solo el código de ejemplo.
 
 	6. Seguridad y Moderación (CRÍTICO):
