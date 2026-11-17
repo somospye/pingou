@@ -1,4 +1,3 @@
-import type { CompletionUsage } from "openai/resources";
 import { type CommandContext, Embed, type InMessageEmbed } from "seyfert";
 import { CONFIG } from "@/config";
 import type { CreateRepLogI } from "@/services/reputationService";
@@ -44,52 +43,6 @@ export const Embeds = {
 				name: `${ctx.author.username}`,
 				iconUrl: ctx.author.avatarURL(),
 			});
-	},
-
-	aiReplyEmbeds(
-		reply: string,
-		usage?: CompletionUsage,
-		sourceUrl?: string,
-		sourceUrls?: string[],
-	): Embed[] {
-		const chunks = this.chunkText(reply, 4000);
-		const input = usage?.prompt_tokens ?? 0;
-		const output = (usage?.total_tokens ?? 0) - input;
-
-		let footerText = usage
-			? `Respuesta IA | I: ${input} | O: ${output}`
-			: "Respuesta IA";
-
-		const urls = sourceUrls?.length ? sourceUrls : sourceUrl ? [sourceUrl] : [];
-
-		if (urls.length === 1) {
-			footerText += ` | 🔍 ${urls[0]}`;
-		} else if (urls.length > 1) {
-			footerText += ` | 🔍 ${urls.length} fuentes`;
-		}
-
-		// Discord limita el footer a 2048 chars
-		const safeFooter = footerText.slice(0, 2048);
-
-		// El footer va en el PRIMER chunk porque ese es el que reemplaza al
-		// embed de "💭 Procesando..." y queda como mensaje principal. Los
-		// chunks siguientes son continuaciones y no necesitan metadata. La
-		// lista expandida de fuentes ya no va inline en un field — se accede
-		// vía botón "📚 Ver fuentes" (componente aiSourceButton) que abre un
-		// mensaje ephemeral, manteniendo el embed principal limpio.
-		return chunks.map((chunk, i) => {
-			const embed = new Embed().setDescription(chunk).setColor("Blue");
-			if (i === 0) embed.setFooter({ text: safeFooter });
-			return embed;
-		});
-	},
-
-	chunkText(text: string, size: number): string[] {
-		const chunks: string[] = [];
-		for (let i = 0; i < text.length; i += size) {
-			chunks.push(text.slice(i, i + size));
-		}
-		return chunks;
 	},
 
 	jobOfferEmbed(data: {

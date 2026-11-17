@@ -1,12 +1,6 @@
 import { randomUUID } from "node:crypto";
-import {
-	ActionRow,
-	Button,
-	Embed,
-	type Message,
-	type UsingClient,
-} from "seyfert";
-import { type APIEmbed, ButtonStyle } from "seyfert/lib/types";
+import { ActionRow, Button, type Message, type UsingClient } from "seyfert";
+import { ButtonStyle } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 import { type AskContext, aiService } from "@/services/ai";
 import { aiHistoryService } from "@/services/aiHistoryService";
@@ -14,7 +8,11 @@ import { aiSourcesStore } from "@/services/aiSources";
 import { cooldownService } from "@/services/cooldown";
 import { webResearchService } from "@/services/webResearch";
 import { loadAttachments } from "@/utils/aiAttachments";
-import { Embeds } from "@/utils/embeds";
+import {
+	splitForDiscord,
+	startTyping,
+	withSingleSource,
+} from "@/utils/aiReply";
 
 /**
  * Construye un ActionRow con el botón "📚 Ver fuentes (N)" cuando hay 2+
@@ -60,12 +58,7 @@ export async function handleAiMention(
 		);
 		await message
 			.reply({
-				embeds: [
-					Embeds.errorEmbed(
-						"Calma!",
-						`Estás saturando la IA. Espera **${remaining} segundos** por favor.`,
-					),
-				],
+				content: `Calma, estás saturando la IA. Espera **${remaining} segundos**.`,
 			})
 			.catch((err) => console.error("Error sending cooldown notice:", err));
 		return true;
@@ -84,16 +77,9 @@ export async function handleAiMention(
 
 	const hasAttachments = message.attachments.length > 0;
 
-	// Mostramos "Procesando..." inmediatamente para preguntas con contenido,
-	// así el usuario sabe que el bot está trabajando mientras clasifica.
-	const statusMsg =
-		cleanContent.length > 0 || hasAttachments
-			? await message.reply({
-					embeds: [
-						new Embed().setDescription("💭 Procesando...").setColor("Blue"),
-					],
-				})
-			: null;
+	// "Pingou está escribiendo..." mientras se genera la respuesta. Se quita
+	// solo cuando el bot manda el mensaje.
+	const stopTyping = startTyping(client, message.channelId);
 
 	// Preparamos el prompt. Si hay contenido directo lo usamos; si la mención
 	// vino sin texto, buscamos los últimos mensajes del usuario como contexto.
@@ -114,24 +100,14 @@ export async function handleAiMention(
 			contextLimit + 1,
 			message.author.id,
 		);
-		if (!prevMessages.length && !hasAttachments) return true;
+		if (!prevMessages.length && !hasAttachments) {
+			stopTyping();
+			return true;
+		}
 		promptMessages = [...prevMessages]
 			.reverse()
 			.map((m) => `${m.author.username}: ${m.content ?? ""}`);
 	}
-
-	// Callback que edita el embed en vivo con el progreso de la investigación
-	const onProgress = statusMsg
-		? async (description: string) => {
-				await client.messages
-					.edit(statusMsg.id, statusMsg.channelId, {
-						embeds: [
-							new Embed().setDescription(description).setColor("Yellow"),
-						],
-					})
-					.catch(() => {});
-			}
-		: undefined;
 
 	// MEGA-CALL #1: una sola call al modelo decide si necesita research,
 	// genera queries, y trae un answer (directo o fallback). Si no hay
@@ -140,7 +116,6 @@ export async function handleAiMention(
 		ReturnType<typeof webResearchService.researchMultiple>
 	> = null;
 	let text: string;
-	let usage: Awaited<ReturnType<typeof aiService.synthesizeAnswer>>["usage"];
 
 	// Historial con el usuario y mensaje al que responde, si lo hay
 	const context: AskContext = {
@@ -155,16 +130,13 @@ export async function handleAiMention(
 
 	if (loaded && (loaded.images.length || loaded.files.length)) {
 		// Con adjuntos vamos directo al modelo potente, sin planner
-		await onProgress?.("📎 Leyendo adjuntos...");
 		const result = await aiService.answerWithAttachments(
 			cleanContent,
 			loaded,
 			context,
 		);
 		text = result.text;
-		usage = result.usage;
 	} else if (shouldResearch) {
-		await onProgress?.("🤔 Pensando...");
 		const plan = await aiService.planResponse(cleanContent, context);
 		const tier = plan.complex ? "COMPLEX" : "FAST";
 
@@ -180,11 +152,9 @@ export async function handleAiMention(
 				webResult = await webResearchService.researchMultiple(
 					cleanContent,
 					plan.queries,
-					onProgress,
 				);
 
 				if (webResult?.sources.length) {
-					await onProgress?.("🤔 Sintetizando respuesta...");
 					// MEGA-CALL #2: synthesize con fuentes crudas. Hace
 					// filtración + extracción + síntesis + citas en 1 call.
 					const synth = await aiService.synthesizeAnswer(
@@ -194,21 +164,16 @@ export async function handleAiMention(
 						context,
 					);
 					text = synth.text;
-					usage = synth.usage;
 				} else {
 					// Investigación no devolvió fuentes — usamos el fallback del plan
 					text = plan.answer;
 				}
 			} else {
-				await onProgress?.(
-					`⏳ Límite de investigación alcanzado (2/min). Respondiendo con conocimiento del modelo — espera **${slot.retryAfter}s** para volver a buscar.`,
-				);
 				text = plan.answer;
 			}
 		} else if (plan.complex) {
 			// El modelo rápido marcó la pregunta como complicada: la responde
 			// un modelo potente
-			await onProgress?.("🧠 Pensando con un modelo más potente...");
 			const chatResult = await aiService.chat(
 				promptMessages,
 				undefined,
@@ -216,7 +181,6 @@ export async function handleAiMention(
 				context,
 			);
 			text = chatResult.text;
-			usage = chatResult.usage;
 		} else {
 			// El modelo decidió que no hace falta research, usamos su answer directo
 			text = plan.answer;
@@ -231,7 +195,6 @@ export async function handleAiMention(
 			context,
 		);
 		text = chatResult.text;
-		usage = chatResult.usage;
 	}
 
 	if (loaded?.skipped.length) {
@@ -247,53 +210,21 @@ export async function handleAiMention(
 		.setCooldown(userId, cooldownKey, 15)
 		.catch((err) => console.error("Error setting AI cooldown:", err));
 
-	const embeds = Embeds.aiReplyEmbeds(
-		text,
-		usage,
-		webResult?.sourceUrl,
-		webResult?.sourceUrls,
-	);
-
-	// Botón "📚 Ver fuentes" cuando hay 2+ fuentes (con 1 sola el footer ya
-	// la muestra directo). Va en el ÚLTIMO chunk para que el usuario lo
-	// encuentre al terminar de leer la respuesta.
+	// Botón "📚 Ver fuentes" cuando hay 2+ fuentes (con 1 sola va al final
+	// del texto). Va en el ÚLTIMO mensaje para que el usuario lo encuentre al
+	// terminar de leer la respuesta.
 	const sourcesRow = buildSourcesRow(webResult?.sourceUrls);
-	const components = sourcesRow ? [sourcesRow] : undefined;
+	const chunks = splitForDiscord(withSingleSource(text, webResult?.sourceUrls));
 
-	const [firstEmbed, ...restEmbeds] = embeds;
-	if (statusMsg && firstEmbed) {
-		// Para respuestas single-chunk, el "último embed" es el primero (el
-		// editado del statusMsg). Solo en ese caso le adjuntamos los components
-		// al edit. Si hay restEmbeds, el row va en el último reply.
-		const firstIsLast = !restEmbeds.length;
-		await client.messages
-			.edit(statusMsg.id, statusMsg.channelId, {
-				embeds: [firstEmbed as APIEmbed],
-				...(firstIsLast && components ? { components } : {}),
+	stopTyping();
+	for (const [i, chunk] of chunks.entries()) {
+		const isLast = i === chunks.length - 1;
+		await message
+			.reply({
+				content: chunk,
+				...(isLast && sourcesRow ? { components: [sourcesRow] } : {}),
 			})
-			.catch((err) =>
-				console.error("Error editing AI reply status embed:", err),
-			);
-		for (const [i, embed] of restEmbeds.entries()) {
-			const isLast = i === restEmbeds.length - 1;
-			await message
-				.reply({
-					embeds: [embed],
-					...(isLast && components ? { components } : {}),
-				})
-				.catch((err) => console.error("Error sending AI reply chunk:", err));
-		}
-	} else {
-		// Mención sin texto — o el statusMsg falló al crearse — replicamos todo
-		for (const [i, embed] of embeds.entries()) {
-			const isLast = i === embeds.length - 1;
-			await message
-				.reply({
-					embeds: [embed],
-					...(isLast && components ? { components } : {}),
-				})
-				.catch((err) => console.error("Error sending AI reply:", err));
-		}
+			.catch((err) => console.error("Error sending AI reply:", err));
 	}
 
 	return true;

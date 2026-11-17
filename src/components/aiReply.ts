@@ -1,6 +1,6 @@
 import { ComponentCommand, type ComponentContext } from "seyfert";
 import { aiService } from "@/services/ai";
-import { Embeds } from "@/utils/embeds";
+import { splitForDiscord } from "@/utils/aiReply";
 
 export default class AIReplyButton extends ComponentCommand {
 	override componentType = "Button" as const;
@@ -21,9 +21,7 @@ export default class AIReplyButton extends ComponentCommand {
 
 			if (!prevMessages) return;
 
-			const { text, usage } = await aiService.chat(
-				prevMessages.map((m) => m.content),
-			);
+			const { text } = await aiService.chat(prevMessages.map((m) => m.content));
 
 			await ctx.client.messages.edit(
 				ctx.interaction.message.id,
@@ -37,12 +35,8 @@ export default class AIReplyButton extends ComponentCommand {
 				content: "✅ Respuesta generada y enviada al hilo.",
 			});
 
-			const embeds = Embeds.aiReplyEmbeds(text, usage);
-
-			for (const embed of embeds) {
-				await ctx.client.messages.write(ctx.channelId, {
-					embeds: [embed],
-				});
+			for (const chunk of splitForDiscord(text)) {
+				await ctx.client.messages.write(ctx.channelId, { content: chunk });
 			}
 		} catch (error) {
 			console.error("Error in AI reply button:", error);
