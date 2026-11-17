@@ -41,8 +41,7 @@ export default class AIReplyButton extends ComponentCommand {
 		} catch (error) {
 			console.error("Error in AI reply button:", error);
 			await ctx.editResponse({
-				content:
-					"❌ Ocurrió un error al generar la respuesta. Por favor, intentá más tarde.",
+				content: "No pude generar la respuesta. Prueba de nuevo en un rato.",
 			});
 		}
 	}
