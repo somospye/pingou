@@ -339,6 +339,37 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
+	threadClosedEmbed(data: {
+		title: string;
+		threadId: string;
+		threadName: string;
+		authorId: string;
+		closedById: string;
+		byStaff: boolean;
+	}): Embed {
+		return new Embed()
+			.setTitle(data.title)
+			.setColor(data.byStaff ? "Orange" : "Grey")
+			.addFields([
+				{
+					name: "Hilo",
+					value: `<#${data.threadId}> (${data.threadName})`,
+					inline: false,
+				},
+				{
+					name: "Autor del post",
+					value: `<@${data.authorId}> (${data.authorId})`,
+					inline: true,
+				},
+				{
+					name: "Cerrado por",
+					value: `<@${data.closedById}> (${data.byStaff ? "staff" : "autor"})`,
+					inline: true,
+				},
+			])
+			.setTimestamp();
+	},
+
 	modActionEmbed(data: {
 		caseId: number;
 		type: string;
