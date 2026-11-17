@@ -118,8 +118,8 @@ export const CONFIG = {
 
 		// Modelos de NVIDIA NIM en orden de preferencia: si uno falla, tarda
 		// demasiado o responde vacío, se prueba el siguiente. FAST se usa para
-		// las preguntas comunes y COMPLEX cuando el planner marca la pregunta
-		// como complicada. `extra` se agrega tal cual al body de la request.
+		// las preguntas comunes y COMPLEX cuando la pregunta es complicada
+		// (ver utils/aiComplexity.ts y el planner). `extra` se agrega tal cual al body de la request.
 		// Catálogo: https://build.nvidia.com/models
 		MODELS: {
 			FAST: [
@@ -131,12 +131,12 @@ export const CONFIG = {
 				{ id: "nvidia/nemotron-3.5-bolt-e4b" },
 			],
 			COMPLEX: [
-				{ id: "mistralai/mistral-large-4-1t-a52b" },
+				{ id: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
 				{ id: "nvidia/nemotron-3-ultra-550b-a55b" },
 			],
 			// Preguntas con imágenes adjuntas: solo modelos que aceptan imágenes.
 			// Si fallan, se responde con COMPLEX sin las imágenes.
-			VISION: [{ id: "mistralai/mistral-large-4-1t-a52b" }],
+			VISION: [{ id: "nvidia/nemotron-3.5-super-vl-120b-a12b" }],
 		} as Record<
 			"FAST" | "COMPLEX" | "VISION",
 			ReadonlyArray<{ id: string; extra?: Record<string, unknown> }>

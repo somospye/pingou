@@ -7,13 +7,14 @@ Eres Pingou, el bot de Programadores y Estudiantes (PyE), una comunidad de Disco
 
 Cómo responder:
 - Ve directo a la respuesta. Sin saludos de relleno, sin "¡Buena pregunta!" y sin resumen al final.
-- Escribe como en un chat: frases cortas y tono cercano. Usa el mismo trato que el usuario (tú o vos).
+- Escribe como en un chat: frases cortas y tono cercano. Trata al usuario de tú; usa vos solo si el usuario escribe con vos.
 - Lo normal son 1 a 4 líneas. Si la pregunta lo pide (un error largo, un tema con varias partes, código), extiéndete lo necesario, sin repetir ideas.
 - Da datos concretos: el comando, la función, la causa probable del error. Si hay varias opciones, recomienda una y di por qué en una línea.
 - Si te falta información para responder bien (el error completo, el lenguaje, el código), pídela en una línea.
 - Si no estás seguro de algo, dilo. No inventes APIs, versiones ni datos.
 - Si es una tarea o un ejercicio, primero da la idea o una pista. Si das la solución completa, puedes esconderla con ||spoiler||.
 - Solo te presentas si te saludan o te preguntan quién eres.
+- Recuerdas tus últimas conversaciones con cada usuario durante 7 días. Si alguien te pide que olvides o borres lo que hablaron, dile que use el comando /olvidar: tú no puedes borrarlo.
 
 Código:
 - Solo cuando ayuda. Ejemplos cortos y completos que funcionen, en un bloque con el lenguaje (\`\`\`py, \`\`\`ts, etc.).
@@ -84,6 +85,13 @@ function contextAsMessages(
 	return messages;
 }
 
+// Se suma al prompt base cuando la pregunta trae adjuntos
+const ATTACHMENTS_PROMPT = `
+Adjuntos:
+- Puedes ver las imágenes que te mandan y leer los archivos de texto adjuntos. Úsalos para responder.
+- No tienes herramientas para decodificar códigos QR ni de barras. Si te lo piden, dilo y describe lo que se ve en la imagen.
+`;
+
 // Los modelos COMPLEX razonan antes de responder y ese razonamiento cuenta
 // para max_tokens, así que necesitan más margen.
 const MAX_TOKENS: Record<ModelTier, number> = {
@@ -127,6 +135,7 @@ export class AIService {
 		let lastError: unknown = new Error(`No hay modelos configurados (${tier})`);
 
 		for (const { id, extra } of CONFIG.AI.MODELS[tier]) {
+			const startedAt = Date.now();
 			try {
 				const completion = await this.ai.chat.completions.create(
 					{ ...params, ...extra, model: id },
@@ -134,6 +143,8 @@ export class AIService {
 				);
 				const text = completion.choices[0]?.message?.content?.trim();
 				if (text) {
+					const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+					console.info(`[ai] ${tier} ${id} respondió en ${seconds}s`);
 					return { text, usage: completion.usage ?? undefined, model: id };
 				}
 				lastError = new Error(`${id} respondió vacío`);
@@ -316,13 +327,10 @@ export class AIService {
 						- saludos
 						- preguntas genéricas
 
-						complex = true si responder bien requiere:
-						- depurar código o errores no triviales
-						- comparar opciones, diseñar o explicar arquitectura
-						- varios pasos de razonamiento o un ejemplo de código largo
-						- algo que no puedes responder con seguridad, o que necesitaría herramientas o datos que no tienes
-
-						complex = false para saludos, definiciones y dudas puntuales.
+						complex decide qué modelo escribe la respuesta final. Pregúntate: ¿la respondería bien alguien del server en 2 o 3 líneas sin pensar mucho?
+						- Si sí → complex = false. Ejemplos: saludos, definiciones ("qué es un closure"), diferencias cortas entre dos cosas conocidas ("let vs const"), cómo hacer una tarea puntual ("cómo centro un div", "cómo invierto un string en python"), dónde encontrar algo.
+						- Si no → complex = true. Ejemplos: encontrar la causa de un bug o un error, revisar código, elegir entre opciones según un contexto ("qué stack uso para X"), diseñar una solución o una arquitectura, explicar un mecanismo paso a paso, optimizar, o cualquier cosa que no puedas responder con seguridad.
+						- Ante la duda entre los dos, elige complex = true.
 
 						---
 
@@ -344,6 +352,8 @@ export class AIService {
 						- "hola" → { "needsResearch": false, "complex": false, "queries": [], "answer": "¡Hola! Soy Pingou, el bot del server. ¿En qué andas?" }
 						- "qué es bun" → { "needsResearch": true, "complex": false, "queries": ["bun javascript runtime", "bun.sh what is"], "answer": "Bun es un runtime de JavaScript, alternativa a Node, que también trae bundler y gestor de paquetes." }
 						- "qué es una variable" → { "needsResearch": false, "complex": false, "queries": [], "answer": "Es un nombre que apunta a un valor que puede cambiar. Por ejemplo, \`let x = 5\` y después \`x = 10\`." }
+						- "cómo invierto un string en python" → { "needsResearch": false, "complex": false, "queries": [], "answer": "Con slicing: \`texto[::-1]\`." }
+						- "qué stack me recomiendan para hacer un e-commerce chico con login y pagos" → { "needsResearch": false, "complex": true, "queries": [], "answer": "Depende de lo que ya sepas, pero Next.js con Stripe es una opción común." }
 						- "mi useEffect entra en un loop infinito cuando actualizo el estado, ¿cómo lo arreglo?" → { "needsResearch": false, "complex": true, "queries": [], "answer": "Pasa porque el efecto actualiza un estado que está en su array de dependencias. Revisa ese array." }`,
 					},
 					{
@@ -554,7 +564,10 @@ Usa el contexto de arriba para responder. No cites las fuentes en el texto (nada
 		) => ({
 			temperature: 0.5,
 			messages: [
-				{ role: "system" as const, content: BOT_PROMPT },
+				{
+					role: "system" as const,
+					content: `${BOT_PROMPT}\n${ATTACHMENTS_PROMPT}`,
+				},
 				...contextAsMessages(context),
 				{ role: "user" as const, content },
 			],
