@@ -1,4 +1,11 @@
-import { ActionRow, Button, createEvent } from "seyfert";
+import {
+	Container,
+	createEvent,
+	Section,
+	TextDisplay,
+	Thumbnail,
+} from "seyfert";
+import { MessageFlags } from "seyfert/lib/types";
 import { CONFIG } from "@/config";
 import { aiService } from "@/services/ai";
 import { Embeds } from "@/utils/embeds";
@@ -21,32 +28,36 @@ export default createEvent({
 
 		if (forum.parentId !== CONFIG.CATEGORIES.FORUMS) return;
 
-		const questionValue = aiService.classify(thread.name);
-
-		let embedDescription: string;
-
-		if (questionValue === "BUENA") {
-			embedDescription = `Hola <@${thread.ownerId}>, ¿Quieres que te ayude con tu consulta sobre **${thread.name}**?`;
-		} else {
-			embedDescription = `Hola <@${thread.ownerId}>, te pido por favor que especifiques mejor tu pregunta sobre **${thread.name}** para poder ayudarte mejor.`;
+		// Sin el intent de Message Content Pingou no puede leer la descripción
+		// del post, así que en vez de responder con IA invita a mencionarlo.
+		const isVague = aiService.classify(thread.name) === "VAGA";
+		const lines = [
+			`## ¡Hola, <@${thread.ownerId}>!`,
+			"Alguien de la comunidad te va a ayudar pronto.",
+			`-# Mientras tanto, puedes mencionarme (<@${client.me.id}>) con tu duda y te respondo.`,
+		];
+		if (isVague) {
+			lines.push(
+				"-# Si puedes, agrega más detalles al post: así es más fácil que te ayuden.",
+			);
 		}
 
-		const embed = Embeds.threadWelcomeEmbed({
-			description: embedDescription,
-			botIcon: client.me.avatarURL(),
-		});
-
-		const button = new Button()
-			.setCustomId("foro-respuesta-ia")
-			.setLabel("Responder con IA")
-			.setStyle(1)
-			.setEmoji("🤖");
-
-		const row = new ActionRow<Button>().addComponents(button);
-
+		const avatar = client.me.avatarURL();
+		const text = new TextDisplay().setContent(lines.join("\n"));
 		await client.messages.write(thread.id, {
-			embeds: [embed],
-			components: [row],
+			components: [
+				new Container()
+					.setColor(0x5865f2)
+					.addComponents(
+						avatar
+							? new Section()
+									.addComponents(text)
+									.setAccessory(new Thumbnail().setMedia(avatar))
+							: text,
+					),
+			],
+			flags: MessageFlags.IsComponentsV2,
+			allowed_mentions: { parse: [] },
 		});
 
 		const programadoresChannelId = CONFIG.CHANNELS.CHAT_PROGRAMADORES;

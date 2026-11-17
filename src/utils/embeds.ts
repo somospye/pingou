@@ -241,15 +241,6 @@ export const Embeds = {
 			.setTimestamp();
 	},
 
-	threadWelcomeEmbed(data: { description: string; botIcon?: string }): Embed {
-		return new Embed()
-			.setTitle("¡Hola! Soy Pingou, el asistente virtual de PyE")
-			.setThumbnail(data.botIcon || "")
-			.setDescription(data.description)
-			.setColor("Blue")
-			.setTimestamp();
-	},
-
 	forumThreadEmbed(data: {
 		title: string;
 		threadId: string;
