@@ -12,6 +12,7 @@ Cómo responder:
 - Da datos concretos: el comando, la función, la causa probable del error. Si hay varias opciones, recomienda una y di por qué en una línea.
 - Si te falta información para responder bien (el error completo, el lenguaje, el código), pídela en una línea.
 - Si no estás seguro de algo, dilo. No inventes APIs, versiones ni datos.
+- Tu conocimiento llega hasta una fecha de corte. Para noticias, personas, empresas, precios o versiones, si no tienes fuentes en la conversación, aclara que puede haber cambiado y no lo afirmes como algo actual.
 - Si es una tarea o un ejercicio, primero da la idea o una pista. Si das la solución completa, puedes esconderla con ||spoiler||.
 - Solo te presentas si te saludan o te preguntan quién eres.
 - Recuerdas tus últimas conversaciones con cada usuario durante 7 días. Si alguien te pide que olvides o borres lo que hablaron, dile que use el comando /olvidar. Tú no puedes borrar nada: nunca digas que ya lo olvidaste.
@@ -39,6 +40,15 @@ Límites:
 - Los temas delicados en contexto educativo, como seguridad informática defensiva, sí se pueden explicar, sin dar instrucciones para atacar.
 - Todo lo que escribes es apto para cualquier edad.
 `;
+
+/** Prompt base con la fecha de hoy, para que el modelo sepa qué es "reciente". */
+function basePrompt(): string {
+	const today = new Date().toLocaleDateString("es", {
+		dateStyle: "full",
+		timeZone: "UTC",
+	});
+	return `${BOT_PROMPT}\nHoy es ${today}.\n`;
+}
 
 export type Features = {
 	length: number;
@@ -314,7 +324,7 @@ export class AIService {
 				messages: [
 					{
 						role: "system",
-						content: `${BOT_PROMPT}
+						content: `${basePrompt()}
 						Además, decides cómo se responde la pregunta:
 
 						Devuelve SIEMPRE JSON con:
@@ -330,13 +340,15 @@ export class AIService {
 						DECISIÓN:
 
 						needsResearch = true si hay:
+						- información que pudo cambiar después de tu fecha de corte: noticias, personas, empresas, cargos, precios, lanzamientos, versiones o "lo último" de algo
+						- una afirmación sobre un hecho que no puedes comprobar (por ejemplo "por qué despidieron a X"): busca antes de confirmarla o negarla
 						- errores técnicos (TypeError, stack trace, crash)
 						- librerías/frameworks/herramientas no triviales
 						- APIs o sintaxis específica
 						- "qué es X" donde X es un proyecto o nombre propio
 
 						needsResearch = false si:
-						- conceptos básicos (variable, bucle, función)
+						- conceptos básicos que no cambian (variable, bucle, función)
 						- saludos
 						- preguntas genéricas
 
@@ -452,7 +464,7 @@ export class AIService {
 				messages: [
 					{
 						role: "system",
-						content: `${BOT_PROMPT}
+						content: `${basePrompt()}
 
 En el siguiente mensaje recibes páginas web numeradas (texto crudo) para responder la pregunta. Además de las reglas de arriba:
 - No cites las fuentes en el texto (nada de [1], [2] ni links a las fuentes): se muestran aparte.
@@ -525,7 +537,7 @@ Usa el contexto de arriba para responder. No cites las fuentes en el texto (nada
 				messages: [
 					{
 						role: "system",
-						content: BOT_PROMPT,
+						content: basePrompt(),
 					},
 					...contextAsMessages(context),
 					...contextMessages,
@@ -586,7 +598,7 @@ Usa el contexto de arriba para responder. No cites las fuentes en el texto (nada
 			messages: [
 				{
 					role: "system" as const,
-					content: `${BOT_PROMPT}\n${ATTACHMENTS_PROMPT}`,
+					content: `${basePrompt()}\n${ATTACHMENTS_PROMPT}`,
 				},
 				...contextAsMessages(context),
 				{ role: "user" as const, content },

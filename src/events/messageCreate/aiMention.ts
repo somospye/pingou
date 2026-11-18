@@ -8,7 +8,7 @@ import { aiSourcesStore } from "@/services/aiSources";
 import { cooldownService } from "@/services/cooldown";
 import { webResearchService } from "@/services/webResearch";
 import { loadAttachments } from "@/utils/aiAttachments";
-import { estimateComplexity } from "@/utils/aiComplexity";
+import { estimateComplexity, needsFreshInfo } from "@/utils/aiComplexity";
 import {
 	cleanAiText,
 	splitForDiscord,
@@ -207,11 +207,21 @@ async function answerMention(
 		const complex =
 			estimated === "complex" || (estimated !== "simple" && plan.complex);
 		const tier = complex ? "COMPLEX" : "FAST";
+		// Si la pregunta habla de algo que pudo cambiar (noticias, versiones,
+		// precios...) se busca aunque el planner no lo haya pedido; sin
+		// queries propias, se busca la pregunta tal cual
+		const fresh = needsFreshInfo(cleanContent);
+		const queries = plan.queries.length
+			? plan.queries
+			: fresh
+				? [cleanContent]
+				: [];
+		const research = (plan.needsResearch || fresh) && queries.length > 0;
 		console.info(
-			`[ai] complejidad: reglas=${estimated ?? "dudosa"} planner=${plan.complex ? "complex" : "simple"} -> ${tier}`,
+			`[ai] complejidad: reglas=${estimated ?? "dudosa"} planner=${plan.complex ? "complex" : "simple"} -> ${tier} | búsqueda: planner=${plan.needsResearch} reglas=${fresh} -> ${research}`,
 		);
 
-		if (plan.needsResearch && plan.queries.length) {
+		if (research) {
 			const slot = await cooldownService
 				.claimRateLimitSlot(userId, "ai-research", 2, 60)
 				.catch((err) => {
@@ -222,7 +232,7 @@ async function answerMention(
 			if (slot.ok) {
 				webResult = await webResearchService.researchMultiple(
 					cleanContent,
-					plan.queries,
+					queries,
 				);
 
 				if (webResult?.sources.length) {
