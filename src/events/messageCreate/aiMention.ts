@@ -210,11 +210,20 @@ async function answerMention(
 		// Si la pregunta habla de algo que pudo cambiar (noticias, versiones,
 		// precios...) se busca aunque el planner no lo haya pedido; sin
 		// queries propias, se busca la pregunta tal cual
-		const fresh = needsFreshInfo(cleanContent);
+		// Repreguntas: si responde a Pingou y la pregunta anterior era sobre
+		// algo reciente, se vuelve a buscar combinando las dos
+		const lastQuestion = context.history
+			?.filter((t) => t.role === "user")
+			.at(-1)?.content;
+		const followUpFresh =
+			replyTo?.author === "Pingou" &&
+			!!lastQuestion &&
+			needsFreshInfo(lastQuestion);
+		const fresh = needsFreshInfo(cleanContent) || followUpFresh;
 		const queries = plan.queries.length
 			? plan.queries
 			: fresh
-				? [cleanContent]
+				? [followUpFresh ? `${lastQuestion} ${cleanContent}` : cleanContent]
 				: [];
 		const research = (plan.needsResearch || fresh) && queries.length > 0;
 		console.info(
@@ -238,10 +247,12 @@ async function answerMention(
 				if (webResult?.sources.length) {
 					// MEGA-CALL #2: synthesize con fuentes crudas. Hace
 					// filtración + extracción + síntesis en 1 call.
+					// Las noticias y datos recientes los arma el modelo potente:
+					// el rápido tiende a creerle más a lo que sabe que a las fuentes
 					const synth = await aiService.synthesizeAnswer(
 						cleanContent,
 						webResult.sources,
-						tier,
+						fresh ? "COMPLEX" : tier,
 						context,
 					);
 					text = synth.text;
