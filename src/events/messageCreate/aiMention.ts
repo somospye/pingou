@@ -242,19 +242,16 @@ async function answerMention(
 			} else {
 				text = plan.answer;
 			}
-		} else if (complex) {
-			// Pregunta complicada (por reglas o por el planner): la responde
-			// un modelo potente
+		} else {
+			// Sin búsqueda: la respuesta completa la escribe el modelo del tier
+			// (la del planner es corta y solo queda de respaldo)
 			const chatResult = await aiService.chat(
 				promptMessages,
 				undefined,
-				"COMPLEX",
+				tier,
 				context,
 			);
-			text = chatResult.text;
-		} else {
-			// El modelo decidió que no hace falta research, usamos su answer directo
-			text = plan.answer;
+			text = chatResult.failed ? plan.answer : chatResult.text;
 		}
 	} else {
 		// Pregunta muy corta, respuesta a un mensaje sin texto propio o

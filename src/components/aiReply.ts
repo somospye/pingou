@@ -63,9 +63,12 @@ export default class AIReplyButton extends ComponentCommand {
 			const estimated = estimateComplexity(question);
 			const complex =
 				estimated === "complex" || (estimated !== "simple" && plan.complex);
-			const text = complex
-				? (await aiService.chat([question], undefined, "COMPLEX")).text
-				: plan.answer;
+			const result = await aiService.chat(
+				[question],
+				undefined,
+				complex ? "COMPLEX" : "FAST",
+			);
+			const text = result.failed ? plan.answer : result.text;
 
 			await stopTyping();
 			for (const [i, chunk] of splitForDiscord(cleanAiText(text)).entries()) {

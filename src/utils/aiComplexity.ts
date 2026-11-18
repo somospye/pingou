@@ -10,6 +10,10 @@ const HEAVY_REQUEST =
 const GREETING =
 	/^(hola+|holi+|buenas?|buen d[ií]a|hey|ey|gracias|muchas gracias|ty|thx|ok|okey|vale|dale|jaja+|xd+|bien|perfecto|genial)\b[\s!?.]*$/i;
 
+// Instalar, configurar o desplegar casi siempre necesita pasos y código
+const SETUP_REQUEST =
+	/\b(instal|configur|despli?eg|deploy|integr|conect|migr|dockeriz|levant(o|ar) (un|el|mi))/i;
+
 const CODE_HINT =
 	/[{}();=<>]|=>|\b(function|const|let|def|class|import|return)\b/;
 const ERROR_WORDS = /\b(error|bug|falla|crash|no funciona|excepci[oó]n)\b/i;
@@ -40,7 +44,10 @@ export function estimateComplexity(text: string): Complexity | null {
 
 	if (
 		GREETING.test(t) ||
-		(t.length <= 60 && !CODE_HINT.test(t) && !ERROR_WORDS.test(t))
+		(t.length <= 45 &&
+			!CODE_HINT.test(t) &&
+			!ERROR_WORDS.test(t) &&
+			!SETUP_REQUEST.test(t))
 	) {
 		return "simple";
 	}
