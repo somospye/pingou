@@ -104,7 +104,7 @@ Adjuntos:
 // Los modelos COMPLEX razonan antes de responder y ese razonamiento cuenta
 // para max_tokens, así que necesitan más margen.
 const MAX_TOKENS: Record<ModelTier, number> = {
-	FAST: 500,
+	FAST: 1000,
 	COMPLEX: 2000,
 	VISION: 2000,
 };
@@ -150,7 +150,11 @@ export class AIService {
 					{ ...params, ...extra, model: id },
 					{ timeout: CONFIG.AI.TIMEOUT_MS[tier] },
 				);
-				const text = completion.choices[0]?.message?.content?.trim();
+				const choice = completion.choices[0];
+				const text = choice?.message?.content?.trim();
+				if (choice?.finish_reason === "length") {
+					console.warn(`[ai] ${tier} ${id} cortó la respuesta por max_tokens`);
+				}
 				if (text) {
 					const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 					console.info(`[ai] ${tier} ${id} respondió en ${seconds}s`);
@@ -350,8 +354,8 @@ export class AIService {
 						---
 
 						ANSWER:
-						- siempre obligatorio, en español
-						- sigue las reglas de arriba: directo, corto y con el tono del server
+						- siempre obligatorio, en español, 1 o 2 líneas
+						- sin bloques de código ni listas: es solo un respaldo por si falla la respuesta completa
 						- si needsResearch=true, una respuesta general sin inventar detalles
 
 						---
@@ -486,7 +490,12 @@ En el siguiente mensaje recibes páginas web numeradas (texto crudo) para respon
 		webContext?: string,
 		tier: ModelTier = "FAST",
 		context?: AskContext,
-	): Promise<{ text: string; usage?: OpenAI.CompletionUsage }> {
+	): Promise<{
+		text: string;
+		usage?: OpenAI.CompletionUsage;
+		/** true si fallaron todos los modelos y `text` es un mensaje de error */
+		failed?: boolean;
+	}> {
 		if (!process.env.AI_API_KEY) {
 			throw new Error("Missing AI_API_KEY env variable");
 		}
@@ -537,11 +546,13 @@ Usa el contexto de arriba para responder. No cites las fuentes en el texto (nada
 			if (isRateLimit) {
 				return {
 					text: "Ahora mismo estoy saturado. Prueba de nuevo en unos minutos.",
+					failed: true,
 				};
 			}
 
 			return {
 				text: "No pude responder tu pregunta. Prueba de nuevo en un rato.",
+				failed: true,
 			};
 		}
 	}
