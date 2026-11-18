@@ -115,6 +115,8 @@ export const CONFIG = {
 		// Cuando está en false, el bot responde solo con el conocimiento del
 		// modelo (sin DDG/Jina), sin tocar el rate limit de research.
 		RESEARCH_ENABLED: true as boolean,
+		// Búsquedas web por usuario por minuto (las repreguntas también buscan)
+		RESEARCH_PER_MINUTE: 5,
 
 		// Modelos de NVIDIA NIM en orden de preferencia: si uno falla, tarda
 		// demasiado o responde vacío, se prueba el siguiente. FAST se usa para

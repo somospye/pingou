@@ -37,6 +37,45 @@ function buildSourcesRow(
 	]);
 }
 
+type Source = { url: string; content: string };
+
+// Fuentes de la última búsqueda de cada usuario, para reusarlas en
+// repreguntas. Solo en memoria: se pierden al reiniciar el bot.
+const RECENT_SOURCES_TTL_MS = 10 * 60 * 1000;
+const MAX_MERGED_SOURCES = 4;
+const recentSources = new Map<
+	string,
+	{ sources: Source[]; expiresAt: number }
+>();
+
+function getRecentSources(userId: string): Source[] {
+	const entry = recentSources.get(userId);
+	if (!entry || entry.expiresAt < Date.now()) {
+		recentSources.delete(userId);
+		return [];
+	}
+	return entry.sources;
+}
+
+function saveRecentSources(userId: string, sources: Source[]) {
+	recentSources.set(userId, {
+		sources,
+		expiresAt: Date.now() + RECENT_SOURCES_TTL_MS,
+	});
+	for (const [id, entry] of recentSources) {
+		if (entry.expiresAt < Date.now()) recentSources.delete(id);
+	}
+}
+
+/** Fuentes nuevas primero, después las anteriores que no estén repetidas. */
+function mergeSources(fresh: Source[], previous: Source[]): Source[] {
+	const seen = new Set(fresh.map((src) => src.url));
+	return [...fresh, ...previous.filter((src) => !seen.has(src.url))].slice(
+		0,
+		MAX_MERGED_SOURCES,
+	);
+}
+
 // Con menos de esto de cooldown restante no se avisa: se espera escribiendo
 const SHORT_WAIT_MS = 4_000;
 // Espera entre preguntas de un mismo usuario, contada desde la respuesta
@@ -176,9 +215,8 @@ async function answerMention(
 	// MEGA-CALL #1: una sola call al modelo decide si necesita research,
 	// genera queries, y trae un answer (directo o fallback). Si no hay
 	// research, terminamos en 1 sola llamada total.
-	let webResult: Awaited<
-		ReturnType<typeof webResearchService.researchMultiple>
-	> = null;
+	// URLs de las fuentes usadas, para el botón "Ver fuentes" o el link final
+	let sourceUrls: string[] | undefined;
 	let text: string;
 
 	// Historial con el usuario y mensaje al que responde, si lo hay
@@ -232,36 +270,53 @@ async function answerMention(
 
 		if (research) {
 			const slot = await cooldownService
-				.claimRateLimitSlot(userId, "ai-research", 2, 60)
+				.claimRateLimitSlot(
+					userId,
+					"ai-research",
+					CONFIG.AI.RESEARCH_PER_MINUTE,
+					60,
+				)
 				.catch((err) => {
 					console.error("Error claiming research slot:", err);
 					return { ok: true } as const;
 				});
 
-			if (slot.ok) {
-				webResult = await webResearchService.researchMultiple(
-					cleanContent,
-					queries,
-				);
+			const found = slot.ok
+				? await webResearchService.researchMultiple(cleanContent, queries)
+				: null;
+			// En una repregunta se suman las fuentes de la búsqueda anterior, así
+			// se puede seguir profundizando aunque la nueva no traiga nada
+			const previous =
+				replyTo?.author === "Pingou" ? getRecentSources(userId) : [];
+			const sources = mergeSources(found?.sources ?? [], previous);
+			console.info(
+				`[ai] búsqueda: ${slot.ok ? `${found?.sources.length ?? 0} fuentes nuevas` : "límite por minuto alcanzado"}, ${previous.length} anteriores`,
+			);
 
-				if (webResult?.sources.length) {
-					// MEGA-CALL #2: synthesize con fuentes crudas. Hace
-					// filtración + extracción + síntesis en 1 call.
-					// Las noticias y datos recientes los arma el modelo potente:
-					// el rápido tiende a creerle más a lo que sabe que a las fuentes
-					const synth = await aiService.synthesizeAnswer(
-						cleanContent,
-						webResult.sources,
-						fresh ? "COMPLEX" : tier,
-						context,
-					);
-					text = synth.text;
-				} else {
-					// Investigación no devolvió fuentes — usamos el fallback del plan
-					text = plan.answer;
-				}
+			if (sources.length) {
+				saveRecentSources(userId, sources);
+				sourceUrls = sources.map((src) => src.url);
+				// MEGA-CALL #2: synthesize con fuentes crudas. Hace
+				// filtración + extracción + síntesis en 1 call.
+				// Las noticias y datos recientes los arma el modelo potente:
+				// el rápido tiende a creerle más a lo que sabe que a las fuentes
+				const synth = await aiService.synthesizeAnswer(
+					cleanContent,
+					sources,
+					fresh ? "COMPLEX" : tier,
+					context,
+				);
+				text = synth.text;
 			} else {
-				text = plan.answer;
+				// Sin fuentes: responde el modelo con el historial; la respuesta
+				// corta del planner queda solo si esto falla
+				const chatResult = await aiService.chat(
+					promptMessages,
+					undefined,
+					tier,
+					context,
+				);
+				text = chatResult.failed ? plan.answer : chatResult.text;
 			}
 		} else {
 			// Sin búsqueda: la respuesta completa la escribe el modelo del tier
@@ -299,9 +354,9 @@ async function answerMention(
 	// Botón "📚 Ver fuentes" cuando hay 2+ fuentes (con 1 sola va al final
 	// del texto). Va en el ÚLTIMO mensaje para que el usuario lo encuentre al
 	// terminar de leer la respuesta.
-	const sourcesRow = buildSourcesRow(webResult?.sourceUrls);
+	const sourcesRow = buildSourcesRow(sourceUrls);
 	const chunks = splitForDiscord(
-		withSingleSource(cleanAiText(text), webResult?.sourceUrls),
+		withSingleSource(cleanAiText(text), sourceUrls),
 	);
 
 	await stopTyping();
