@@ -61,7 +61,7 @@ const FRESH_INFO = new RegExp(
 	[
 		String.raw`\b(hoy|ayer|ahora mismo|actualmente|este año|esta semana|este mes|202\d)\b`,
 		String.raw`\b([uú]ltim[oa]s?|reciente(s|mente)?|nuev[oa]s?) (versi[oó]n|release|noticias?|actualizaci[oó]n|lanzamiento|modelo|cambios)`,
-		String.raw`\b(noticias?|novedades|qu[eé] pas[oó]|se cay[oó])\b`,
+		String.raw`\b(noticias?|novedades|qu[eé] (le |les |te |me )?pas[oó]|se cay[oó])\b`,
 		String.raw`\b(despidi|renunci|muri[oó]|falleci|arrest|demand[oó]|compr[oó]|adquiri|lanz[oó]|anunci[oó]|elegid|elecciones)`,
 		String.raw`\b(precio|cu[aá]nto cuesta|cotizaci[oó]n|vale el (d[oó]lar|bitcoin))\b`,
 		String.raw`\b(ceo|presidente|fundador) de\b`,
