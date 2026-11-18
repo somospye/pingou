@@ -54,3 +54,22 @@ export function estimateComplexity(text: string): Complexity | null {
 
 	return null;
 }
+
+// Preguntas sobre hechos que cambian con el tiempo: noticias, personas,
+// empresas, precios o versiones. El modelo no los sabe al día.
+const FRESH_INFO = new RegExp(
+	[
+		String.raw`\b(hoy|ayer|ahora mismo|actualmente|este año|esta semana|este mes|202\d)\b`,
+		String.raw`\b([uú]ltim[oa]s?|reciente(s|mente)?|nuev[oa]s?) (versi[oó]n|release|noticias?|actualizaci[oó]n|lanzamiento|modelo|cambios)`,
+		String.raw`\b(noticias?|novedades|qu[eé] pas[oó]|se cay[oó])\b`,
+		String.raw`\b(despidi|renunci|muri[oó]|falleci|arrest|demand[oó]|compr[oó]|adquiri|lanz[oó]|anunci[oó]|elegid|elecciones)`,
+		String.raw`\b(precio|cu[aá]nto cuesta|cotizaci[oó]n|vale el (d[oó]lar|bitcoin))\b`,
+		String.raw`\b(ceo|presidente|fundador) de\b`,
+	].join("|"),
+	"i",
+);
+
+/** true si la pregunta pide información que pudo cambiar y conviene buscar. */
+export function needsFreshInfo(text: string): boolean {
+	return FRESH_INFO.test(text);
+}
