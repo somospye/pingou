@@ -15,6 +15,7 @@ import {
 	startTyping,
 	withSingleSource,
 } from "@/utils/aiReply";
+import { commandMention } from "@/utils/commandMention";
 
 /**
  * Construye un ActionRow con el botón "📚 Ver fuentes (N)" cuando hay 2+
@@ -38,6 +39,24 @@ function buildSourcesRow(
 
 // Con menos de esto de cooldown restante no se avisa: se espera escribiendo
 const SHORT_WAIT_MS = 4_000;
+// Espera entre preguntas de un mismo usuario, contada desde la respuesta
+const COOLDOWN_SECONDS = 8;
+const COOLDOWN_KEY = "ai-mention";
+const THINKING_EMOJI = "<:thonk:887124153445023765>";
+
+// Usuarios con una respuesta en curso: no se procesa otra mención suya
+// hasta que termine
+const inProgress = new Set<string>();
+
+// Pedidos de olvidar o borrar la conversación con Pingou. Se responden sin
+// IA para que el modelo no diga "ya lo olvidé" cuando no puede hacerlo.
+const FORGET_REQUEST = new RegExp(
+	[
+		String.raw`\bolv[ií]da(r|te|lo|me|rlo)?\b.{0,40}\b(todo|esto|eso|nuestra|la conversaci[oó]n|el historial|lo anterior|de m[ií]|lo que (te )?(dije|hablamos|pregunt[eé]))`,
+		String.raw`\bborr(a|á|ar|es|alo)(?=\s).{0,30}\b(nuestra|tu|mi) (conversaci[oó]n|historial|memoria|chat)\b`,
+	].join("|"),
+	"i",
+);
 
 /**
  * Maneja menciones al bot (@Pingou ...) con respuesta de IA, investigación
@@ -51,73 +70,108 @@ export async function handleAiMention(
 	if (!message.mentions.users.some((u) => u.id === client.me.id)) return false;
 
 	const userId = message.author.id;
-	const cooldownKey = "ai-mention";
+
+	if (inProgress.has(userId)) {
+		await message
+			.reply({
+				content: `${THINKING_EMOJI} Dame un momento, todavía estoy con tu pregunta anterior`,
+			})
+			.catch((err) => console.error("Error sending busy notice:", err));
+		return true;
+	}
 
 	const currentCooldown = await cooldownService.getCooldown(
 		userId,
-		cooldownKey,
+		COOLDOWN_KEY,
 	);
-	if (currentCooldown) {
-		const remainingMs = currentCooldown.expiresAt.getTime() - Date.now();
-		if (remainingMs >= SHORT_WAIT_MS) {
-			await message
-				.reply({
-					content: `<:thonk:887124153445023765> Dejame pensar, espera **${Math.ceil(remainingMs / 1000)} segundos**`,
-				})
-				.catch((err) => console.error("Error sending cooldown notice:", err));
-			return true;
-		}
-		// Si falta poco, en vez de avisar mostramos "escribiendo..." y
-		// esperamos a que termine el cooldown antes de llamar a la API
-		const stopWaitTyping = startTyping(client, message.channelId);
-		await new Promise((resolve) => setTimeout(resolve, remainingMs));
-		await stopWaitTyping();
+	const remainingMs = currentCooldown
+		? currentCooldown.expiresAt.getTime() - Date.now()
+		: 0;
+	if (remainingMs >= SHORT_WAIT_MS) {
+		await message
+			.reply({
+				content: `${THINKING_EMOJI} Dejame pensar, espera **${Math.ceil(remainingMs / 1000)} segundos**`,
+			})
+			.catch((err) => console.error("Error sending cooldown notice:", err));
+		return true;
 	}
+
+	inProgress.add(userId);
+	try {
+		if (remainingMs > 0) {
+			// Si falta poco, en vez de avisar mostramos "escribiendo..." y
+			// esperamos a que termine el cooldown antes de llamar a la API
+			const stopWaitTyping = startTyping(client, message.channelId);
+			await new Promise((resolve) => setTimeout(resolve, remainingMs));
+			await stopWaitTyping();
+		}
+
+		const usedAi = await answerMention(message, client);
+		if (usedAi) {
+			await cooldownService
+				.setCooldown(userId, COOLDOWN_KEY, COOLDOWN_SECONDS)
+				.catch((err) => console.error("Error setting AI cooldown:", err));
+		}
+	} catch (err) {
+		console.error("Error handling AI mention:", err);
+	} finally {
+		inProgress.delete(userId);
+	}
+
+	return true;
+}
+
+/** Responde una mención. Devuelve true si se usó la IA. */
+async function answerMention(
+	message: Message,
+	client: UsingClient,
+): Promise<boolean> {
+	const userId = message.author.id;
+	const reply = (content: string) =>
+		message
+			.reply({ content, allowed_mentions: { parse: [], replied_user: true } })
+			.catch((err) => console.error("Error sending AI reply:", err));
 
 	// Extraemos el contenido limpio quitando el mention al bot
 	const cleanContent = (message.content ?? "")
 		.replaceAll(new RegExp(`<@!?${client.me.id}>`, "g"), "")
 		.trim();
+	const hasAttachments = message.attachments.length > 0;
+	const replyTo = getReplyContext(message, client.me.id);
 
-	let contextLimit = 2;
-	const match = /contexto:\s*(\d+)/i.exec(cleanContent);
-	if (match?.[1]) {
-		contextLimit = Math.min(Number.parseInt(match[1], 10), 10);
+	if (!hasAttachments && FORGET_REQUEST.test(cleanContent)) {
+		const forget = await commandMention(client, "olvidar");
+		await reply(
+			`Eso no lo puedo borrar yo. Usa ${forget} y confirma: ahí se borra tu historial conmigo.`,
+		);
+		return false;
 	}
 
-	const hasAttachments = message.attachments.length > 0;
+	// Mención sin texto ni adjuntos. Sin el intent de Message Content no
+	// podemos leer los mensajes anteriores del canal, así que solo usamos el
+	// mensaje al que responde (si se puede leer) o preguntamos.
+	if (!cleanContent && !hasAttachments && !replyTo) {
+		await reply("¿En qué te ayudo?");
+		return false;
+	}
+
+	const question =
+		cleanContent ||
+		(replyTo
+			? "Responde o comenta el mensaje al que estoy respondiendo."
+			: "Analiza los adjuntos.");
+	const promptMessages = [`${message.author.username}: ${question}`];
 
 	// "Pingou está escribiendo..." mientras se genera la respuesta. Se quita
 	// solo cuando el bot manda el mensaje.
 	const stopTyping = startTyping(client, message.channelId);
 
-	// Preparamos el prompt. Si hay contenido directo lo usamos; si la mención
-	// vino sin texto, buscamos los últimos mensajes del usuario como contexto.
-	let promptMessages: string[];
 	// El modelo dentro de researchMultiple decide por sí mismo si investigar
 	// (0 queries = no investiga) y cuántas búsquedas hacer. Solo verificamos
 	// que haya contenido mínimo para no llamar al modelo en menciones vacías.
 	// El feature flag CONFIG.AI.RESEARCH_ENABLED permite desactivar todo el
 	// módulo de investigación web sin tocar el código.
 	const shouldResearch = CONFIG.AI.RESEARCH_ENABLED && cleanContent.length >= 4;
-
-	if (cleanContent.length > 0) {
-		promptMessages = [`${message.author.username}: ${cleanContent}`];
-	} else {
-		const prevMessages = await aiService.getLatestMessages(
-			client,
-			message.channelId,
-			contextLimit + 1,
-			message.author.id,
-		);
-		if (!prevMessages.length && !hasAttachments) {
-			await stopTyping();
-			return true;
-		}
-		promptMessages = [...prevMessages]
-			.reverse()
-			.map((m) => `${m.author.username}: ${m.content ?? ""}`);
-	}
 
 	// MEGA-CALL #1: una sola call al modelo decide si necesita research,
 	// genera queries, y trae un answer (directo o fallback). Si no hay
@@ -133,7 +187,7 @@ export async function handleAiMention(
 			console.error("Error loading AI history:", err);
 			return [];
 		}),
-		replyTo: getReplyContext(message, client.me.id),
+		replyTo,
 	};
 
 	const loaded = hasAttachments ? await loadAttachments(message) : null;
@@ -203,8 +257,8 @@ export async function handleAiMention(
 			text = plan.answer;
 		}
 	} else {
-		// Camino sin research por config / contenido muy corto / mención sin texto
-		// (vamos al chat clásico con history de mensajes previos)
+		// Pregunta muy corta, respuesta a un mensaje sin texto propio o
+		// investigación desactivada: chat directo con el modelo rápido
 		const chatResult = await aiService.chat(
 			promptMessages,
 			undefined,
@@ -218,14 +272,11 @@ export async function handleAiMention(
 		text += `\n\n-# No pude leer: ${loaded.skipped.join(", ")}`;
 	}
 
-	const question = cleanContent || "(adjuntos)";
+	const historyQuestion =
+		cleanContent || (replyTo ? "(respondió a un mensaje)" : "(adjuntos)");
 	await aiHistoryService
-		.record(userId, question, text)
+		.record(userId, historyQuestion, text)
 		.catch((err) => console.error("Error saving AI history:", err));
-
-	await cooldownService
-		.setCooldown(userId, cooldownKey, 15)
-		.catch((err) => console.error("Error setting AI cooldown:", err));
 
 	// Botón "📚 Ver fuentes" cuando hay 2+ fuentes (con 1 sola va al final
 	// del texto). Va en el ÚLTIMO mensaje para que el usuario lo encuentre al
