@@ -47,3 +47,7 @@ variable "name_db" {
   sensitive   = true
 }
 
+variable "version_psql" {
+  description = "Version controlada de POSTGRESQL"
+  type = string
+}

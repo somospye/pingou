@@ -14,6 +14,7 @@ jobs:
       TF_VAR_psql_user: "${{ secrets.PSQL_USER }}"
       TF_VAR_psql_pass: "${{ secrets.PSQL_PASS }}"
       TF_VAR_name_db: "${{ secrets.NAME_DB }}"
+      TF_VAR_version_psql:  "16-alpine"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
