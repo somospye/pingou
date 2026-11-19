@@ -15,18 +15,20 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        nativeBuildInputs = [
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+
+        packages = [
           pkgs.bun
           pkgs.vtsls
           pkgs.typescript
           pkgs.lefthook
           pkgs.biome
         ];
-        buildInputs = with pkgs; [ ];
       in
       {
-        devShells.default = pkgs.mkShell { inherit nativeBuildInputs buildInputs; };
+        devShells.default = pkgs.mkShell { inherit packages; };
 
       }
     );
