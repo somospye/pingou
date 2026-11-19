@@ -1,0 +1,5 @@
+access_key = "<YOUR_R2_ACCESS_KEY>"
+secret_key = "<YOUR_R2_ACCESS_SECRET>"
+endpoints = {
+    s3 = "https://<YOUR_ACCOUNT_ID>.r2.cloudflarestorage.com"
+}

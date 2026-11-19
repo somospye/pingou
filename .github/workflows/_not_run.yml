@@ -1,0 +1,44 @@
+name: no-run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  CD:
+    env:
+      TF_VAR_vm_ip: "${{ secrets.VM_IP }}"
+      TF_VAR_vm_host: "${{ secrets.VM_HOST }}"
+      TF_VAR_url_image_docker_hub: "${{ vars.URL_IMAGE_PINGOU }}"
+      TF_VAR_token_bot_pingou: "${{ secrets.TOKEN_PINGOU }}"
+      TF_VAR_public_bot: "${{ vars.PUBLIC_ID_PINGOU }}"
+      TF_VAR_psql_user: "${{ secrets.PSQL_USER }}"
+      TF_VAR_psql_pass: "${{ secrets.PSQL_PASS }}"
+      TF_VAR_name_db: "${{ secrets.NAME_DB }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+      
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Terraform init
+        working-directory: ./infra
+        run: terraform init
+
+      - name: Terraform validate
+        working-directory: ./infra
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: ./infra
+        run: terraform plan -out plan.out
+
+      - name: Terraform apply
+        working-directory: ./infra
+        run: terraform apply -auto-approve "plan.out"
+
+      - run: echo "Sucess Deploy"
+        
+
+
