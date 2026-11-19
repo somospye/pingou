@@ -1,4 +1,4 @@
-.PHONY: prepare.docker prepare.podman db
+.PHONY: prepare.docker prepare.podman db fmt-terraform
 
 prepare.docker:
 	sudo docker-compose up -d
@@ -14,3 +14,6 @@ db:
 	bun db:generate
 	bun db:migrate
 	bun db:push
+
+fmt-terraform:
+	terraform fmt --recursive
