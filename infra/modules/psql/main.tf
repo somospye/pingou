@@ -1,5 +1,5 @@
 resource "docker_image" "psql" {
-  name = "postgres:${var.version_psql}"
+  name         = "postgres:${var.version_psql}"
   keep_locally = false
 }
 
@@ -11,16 +11,16 @@ resource "docker_volume" "psql_data" {
 }
 
 resource "azurecaf_name" "random_name_psql" {
-  name = "${docker_image.psql.name}"
+  name          = docker_image.psql.name
   resource_type = "azurem_resource_group"
-  prefixes = ["pin", "py", "d"]
-  suffixes = ["gou", "e", "b"]
+  prefixes      = ["pin", "py", "d"]
+  suffixes      = ["gou", "e", "b"]
   random_length = 4
-  clean_input = true
+  clean_input   = true
 }
 
 resource "docker_container" "psql" {
-  name = azurecaf_name.random_name_psql.result
+  name  = azurecaf_name.random_name_psql.result
   image = docker_image.psql.image_id
 
   ports {
@@ -33,7 +33,7 @@ resource "docker_container" "psql" {
     "POSTGRES_DB=${var.name_db}"
   ]
   volumes {
-    volume_name = docker_volume.psql_data.name
+    volume_name    = docker_volume.psql_data.name
     container_path = "/var/lib/postgresql/data"
   }
   restart = "always"

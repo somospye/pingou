@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket = "pingou_tfstate"
-    key = "state.tfstate"
-    region = "auto"
+    bucket                      = "pingou_tfstate"
+    key                         = "state.tfstate"
+    region                      = "auto"
     skip_credentials_validation = true
     skip_metadata_api_check     = true
     skip_region_validation      = true
