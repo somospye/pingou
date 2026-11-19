@@ -22,6 +22,21 @@ jobs:
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v4
 
+      - name: Generate backend.hcl
+        run: |
+          cat <<EOF > backend.hcl
+          access_key = "${{ secrets.R2_ACCESS_KEY_ID }}"
+          secret_key = "${{ secrets.R2_SECRET_ACCESS_KEY }}"
+          endpoints = {
+            s3 = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          }
+          EOF
+      - name: Generate ssh key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
       - name: Terraform init
         working-directory: ./infra
         run: terraform init
