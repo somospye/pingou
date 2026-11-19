@@ -3,6 +3,7 @@ module "psql" {
   psql_user = var.psql_user
   psql_pass = var.psql_pass
   name_db   = var.name_db
+  version_psql = var.version_psql
 }
 
 module "pingou" {
